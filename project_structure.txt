@@ -1,0 +1,43 @@
+.
+├── README.md
+├── __pycache__
+│   ├── database.cpython-312.pyc
+│   ├── main.cpython-312.pyc
+│   └── models.cpython-312.pyc
+├── api
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   └── __init__.cpython-312.pyc
+│   └── v1
+│       ├── __init__.py
+│       ├── __pycache__
+│       │   └── __init__.cpython-312.pyc
+│       └── endpoints
+│           ├── __init__.py
+│           ├── __pycache__
+│           │   ├── __init__.cpython-312.pyc
+│           │   └── chat.cpython-312.pyc
+│           └── chat.py
+├── database.py
+├── main.py
+├── models.py
+├── project_structure.txt
+├── python
+│   ├── __pycache__
+│   │   └── main.cpython-312.pyc
+│   ├── main.py
+│   └── requirements.txt
+├── repositories
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-312.pyc
+│   │   └── chat_repository.cpython-312.pyc
+│   └── chat_repository.py
+└── services
+    ├── __init__.py
+    ├── __pycache__
+    │   ├── __init__.cpython-312.pyc
+    │   └── chat_service.cpython-312.pyc
+    └── chat_service.py
+
+13 directories, 27 files
