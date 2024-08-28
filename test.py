@@ -3,8 +3,8 @@ import json
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from datetime import datetime, timedelta
-from models import AI, User, Chatbot, ChatRoom, UserInfo, ChatStatistics
-from database import (
+from models.models import AI, User, Chatbot, ChatRoom, UserInfo, ChatStatistics
+from repository.database import (
     ai_add_or_update_data,
     user_add_or_update_data,
     chatbot_add_data,
