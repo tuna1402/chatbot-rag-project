@@ -42,9 +42,33 @@ def chatroom_add():
 
 
 #지훈님
-## AI 봇 추가하기 & AI 봇 업데이트하기 - 테이블 -> AI
-## 사용자 정보 추가하기 & 사용자 정보 업데이트하기 - 유저테이블
+    ## AI 봇 추가하기 & AI 봇 업데이트하기 - 테이블 -> AI
 
+def service_test():
+    # AI 봇 추가 또는 업데이트 테스트
+    ai_data = {
+        'id': 1,
+        'name': 'Test AI',
+        'initial_prompt': 'Hello',
+        'max_tokens': 150,
+        'prompt_tokens': 100,
+        'completion_tokens': 100,
+        'total_tokens': 100,
+        'ai_speech_log': '["Hello!"]'
+    }
+    ai_add_or_update_data(ai_data)
+
+    ## 사용자 정보 추가하기 & 사용자 정보 업데이트하기 - 유저테이블
+    
+    user_data = {
+        'id': 1,
+        'contact_info': 'test1@example.com',
+        'friend_status': True,
+        'user_speech_log': '["Hi there!"]'
+    }
+    user = user_add_or_update_data(user_data)
+
+    chatroom_add()
 
 #다인님
 ## 사용자 메시지 로그 저장하기 - 보수공사 후 진행 ->유저인포테이블
