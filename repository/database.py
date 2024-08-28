@@ -1,8 +1,8 @@
 import json
 from sqlalchemy import func
-from base import SessionLocal, Base, engine
+from repository.base import SessionLocal, Base, engine
 from datetime import datetime, timedelta
-from models import AI, User, Chatbot, ChatRoom, UserInfo, ChatStatistics
+from models.models import AI, User, Chatbot, ChatRoom, UserInfo, ChatStatistics
 
 # last_chat_log_time() 함수를 호출한 시간을 마지막 채팅 시간(last_chat_time)으로 저장합니다.
 # get_last_chat_log_time() 함수를 호출할 시 마지막 채팅 시간을 return합니다.
@@ -20,6 +20,18 @@ from models import AI, User, Chatbot, ChatRoom, UserInfo, ChatStatistics
 # time_and_token_search() 호출 시 마지막 채팅 시간, 현재 시간, total_token값을 반환합니다.
 
 last_chat_time = None
+
+def db_session():
+    # 새로운 데이터베이스 세션을 생성합니다.
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = SessionLocal(bind=connection)
+    
+    yield session
+    
+    session.close()
+    transaction.rollback()
+    connection.close()
 
 def last_chat_log_time():
     global last_chat_time
