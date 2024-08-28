@@ -6,6 +6,7 @@ from base import engine, Base
 Base = declarative_base()
 
 # https://iwillcomplete.tistory.com/77 varchar와 text의 차이
+# 
 
 # AI
 class AI(Base):

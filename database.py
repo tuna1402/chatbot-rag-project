@@ -1,23 +1,36 @@
 import json
+from sqlalchemy import func
 from base import SessionLocal, Base, engine
 from datetime import datetime, timedelta
 from models import AI, User, Chatbot, ChatRoom, UserInfo, ChatStatistics
-from datetime import datetime
 
+# last_chat_log_time() 함수를 호출한 시간을 마지막 채팅 시간(last_chat_time)으로 저장합니다.
+# get_last_chat_log_time() 함수를 호출할 시 마지막 채팅 시간을 return합니다.
+
+# add_all() model_name 값에 해당하는 함수를 호출하며 매개변수로 json_data를 전달합니다.
+
+# ai_add_or_update_data 전달받은 매개변수의 데이터를 ai 엔티티에 추가하거나 업데이트합니다.
+# user_add_or_update_data 전달받은 매개변수의 데이터를 users 엔티티에 추가하거나 업데이트합니다.
+# chatbot_add_or_update_data 전달받은 매개변수의 데이터를 chatbot 엔티티에 추가하거나 업데이트합니다.
+# chatroom_add_or_update 전달받은 매개변수의 데이터를 chatroom 엔티티에 추가하거나 업데이트합니다.
+# userInfo_add_data 전달받은 매개변수의 데이터를 user_info 엔티티에 추가하거나 업데이트합니다.
+# chatStatistics_data 전달받은 매개변수의 데이터를 chat_statistics 엔티티에 추가하거나 업데이트합니다.
+
+# update_end_time() 채팅이 종료되었을 때 end_time를 업데이트합니다.
+# time_and_token_search() 호출 시 마지막 채팅 시간, 현재 시간, total_token값을 반환합니다.
 
 last_chat_time = None
 
 def last_chat_log_time():
-    global last_chat_time  # 전역변수를 사용하기 위해 선언
+    global last_chat_time
     last_chat_time = datetime.now()
 
 def get_last_chat_log_time():
     return last_chat_time
 
+
 # create&update
 
-
-# add_all
 def add_all(json_data: dict, model_name: str):
 
     # model_name에 따라 함수를 호출합니다.
@@ -26,15 +39,14 @@ def add_all(json_data: dict, model_name: str):
     elif model_name == 'User':
         return user_add_or_update_data(json_data)
     elif model_name == 'Chatbot':
-        return chatbot_add_data(json_data)
+        return chatbot_add_or_update_data(json_data)
     elif model_name == 'ChatRoom':
-        return chatroom_add_data(json_data)
+        return chatroom_add_or_update(json_data)
     elif model_name == 'UserInfo':
         return userinfo_add_or_update_data(json_data)
     elif model_name == 'ChatStatistics':
         return chat_statistics_add_or_update_data(json_data)
 
-# ai_add_data
 def ai_add_or_update_data(json_data: dict):
 
     # Json 데이터를 파싱합니다.
@@ -61,7 +73,7 @@ def ai_add_or_update_data(json_data: dict):
             existing_usage.update(usage_data)
             ai.usage = json.dumps(existing_usage, ensure_ascii=False)
             
-            # ai_speech_log룰 업데이트합니다. (기존 데이터에 추가)
+            # ai_speech_log를 업데이트합니다. (기존 데이터에 추가)
             log_list = json.loads(ai.ai_speech_log)
             new_log_list = json.loads(ai_speech_log)
             log_list.extend(new_log_list)
@@ -82,27 +94,22 @@ def ai_add_or_update_data(json_data: dict):
         db.commit()  # 변경 사항 저장
         db.refresh(ai)  # 세션 새로고침
 
-        
         return ai
 
-# user_add_data
 def user_add_or_update_data(json_data: dict):
 
     user_id = json_data.get('id')
     contact_info = json_data.get('contact_info')
     friend_status = json_data.get('friend_status')
-    revisit_count = json_data.get('revisit_count')
     user_speech_log = json_data.get('user_speech_log', '[]')
 
     with SessionLocal() as db:
-
         user = db.query(User).filter(User.id == user_id).first()
         
         # 기존 사용자 데이터를 업데이트합니다.
         if user:
             user.contact_info = contact_info
             user.friend_status = friend_status
-            revisit_count = revisit_count
             chat_list = json.loads(user.user_speech_log)
             new_chat_list = json.loads(user_speech_log)
             chat_list.extend(new_chat_list)
@@ -114,29 +121,38 @@ def user_add_or_update_data(json_data: dict):
                 id=user_id,
                 contact_info=contact_info,
                 friend_status=friend_status,
-                revisit_count=revisit_count,
+                revisit_count=0,
                 user_speech_log=json.dumps(json.loads(user_speech_log), ensure_ascii=False)
             )
             db.add(user)
         
         db.commit()
         db.refresh(user)
+
         return user
 
-# chatbot_add_data
-def chatbot_add_data(json_data: dict):
+def chatbot_add_or_update_data(json_data: dict):
     chatbot_id = json_data.get('id')
     name = json_data.get('name')
     ai_id = json_data.get('ai_id')
 
     with SessionLocal() as db:
-        chatbot = Chatbot(
-            id=chatbot_id,
-            name=name,
-            ai_id=ai_id
-        )
+        chatbot = db.query(Chatbot).filter(Chatbot.id == chatbot_id).first()
+
+        # 기존 사용자 데이터를 업데이트합니다.
+        if chatbot:
+            chatbot.name = name
+            chatbot.ai_id = ai_id
+        else:
+
+            # 챗봇이(id) 존재하지 않을 경우 새 챗봇을 추가합니다.
+            chatbot = Chatbot(
+                id=chatbot_id,
+                name=name,
+                ai_id=ai_id
+            )
+            db.add(chatbot)
         
-        db.add(chatbot)
         db.commit()
         db.refresh(chatbot)
         
@@ -144,60 +160,59 @@ def chatbot_add_data(json_data: dict):
 
         return chatbot
     
-# chatroom_add_data
-def chatroom_add_data(json_data: dict):
+def chatroom_add_or_update(json_data: dict):
     chatroom_id = json_data.get('id')
     user_id = json_data.get('user_id')
     ai_id = json_data.get('ai_id')
     chatbot_id = json_data.get('chatbot_id')
-    start_time = datetime.fromisoformat(json_data.get('start_time'))
     
     with SessionLocal() as db:
-
         existing_chatroom = db.query(ChatRoom).filter(ChatRoom.id == chatroom_id).first()
-        
+         
         if existing_chatroom:
             end_time = existing_chatroom.end_time
 
             if end_time:
-                # end_time이 존재하는 경우 conversation_duration 계산
-                conversation_duration = end_time - start_time
+                existing_chatroom.start_time = datetime.utcnow()  # 현재 시간으로 start_time을 업데이트합니다.
+                existing_chatroom.end_time = None  # end_time을 초기화합니다.
+                existing_chatroom.conversation_duration = None
             else:
-                # end_time이 존재하지 않는 경우, conversation_duration은 None
-                conversation_duration = None
+                # end_time이 존재하지 않으면(=채팅이 종료되지 않았다면) start_time과 conversation_duration을 그대로 유지합니다.
+                pass
 
-            # 기존 ChatRoom을 업데이트합니다.
+            # user_id, ai_id, chatbot_id를 업데이트합니다.
             existing_chatroom.user_id = user_id
             existing_chatroom.ai_id = ai_id
             existing_chatroom.chatbot_id = chatbot_id
-            existing_chatroom.start_time = start_time
-            existing_chatroom.end_time = end_time
-            existing_chatroom.conversation_duration = conversation_duration
 
-            db.commit()  # 변경 사항을 커밋합니다.
+            # User의 revisit_count를 업데이트합니다.
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                user.revisit_count = (user.revisit_count or 0) + 1
+
+            db.commit()
             db.refresh(existing_chatroom)
-            
-            return existing_chatroom
 
+            return existing_chatroom
+        
+        # 채팅방이(id) 존재하지 않을 경우 새 채팅방을 추가합니다.
         else:
-            # 기존 ChatRoom이 존재하지 않는 경우 새로 생성합니다.
             chatroom = ChatRoom(
                 id=chatroom_id,
                 user_id=user_id,
                 ai_id=ai_id,
                 chatbot_id=chatbot_id,
-                start_time=start_time,
-                end_time=None,  # end_time은 NULL로 설정
-                conversation_duration=None  # conversation_duration은 NULL로 설정
+                start_time=datetime.utcnow(),  # 처음 생성 시 현재 시간으로 start_time 설정합니다.
+                end_time=None,  # 초기 end_time은 None로 설정합니다.
+                conversation_duration=timedelta(0)
             )
             
             db.add(chatroom)
             db.commit()
             db.refresh(chatroom)
-            
+
             return chatroom
 
-# userInfo_add_data
 def userinfo_add_or_update_data(json_data: dict):
 
     userinfo_id = json_data.get('id')
@@ -220,12 +235,13 @@ def userinfo_add_or_update_data(json_data: dict):
             userinfo.age = age
             userinfo.region = region
             
-            # trend_design 업데이트 (기존 디자인에 새 디자인 추가)
+            # trend_design 업데이트합니다. (기존 디자인에 새 디자인 추가)
             trend_list = json.loads(userinfo.trend_design)
             new_trend_list = json.loads(trend_design)
             trend_list.extend(new_trend_list)
             userinfo.trend_design = json.dumps(trend_list, ensure_ascii=False)
-            
+
+        # 유저 정보가(id) 존재하지 않을 경우 새 유저 정보를 추가합니다. 
         else:
             userinfo = UserInfo(
                 id=userinfo_id,
@@ -243,104 +259,111 @@ def userinfo_add_or_update_data(json_data: dict):
 
         return userinfo
 
-# chatStatistics_data
 def chat_statistics_add_or_update_data(json_data: dict):
     
     statistics_id = json_data.get('id')
     chatroom_id = json_data.get('chatroom_id')
-    average_chat_duration = timedelta(seconds=json_data.get('average_chat_duration'))
-
-    average_tokens = json_data.get('average_tokens')
 
     with SessionLocal() as db:
+        chatroom = db.query(ChatRoom).filter(ChatRoom.id == chatroom_id).first()
 
+        if chatroom:
+            ai = db.query(AI).filter(AI.id == chatroom.ai_id).first()
+
+            if ai:
+                existing_usage = json.loads(ai.usage) if ai.usage else {}
+                ai_total_tokens = existing_usage.get('total_tokens', 0)
+
+            else:
+                ai_total_tokens = 0
+
+        else:
+            ai_total_tokens = 0
+        
+        # 기존 ChatStatistics를 조회합니다.
         statistics = db.query(ChatStatistics).filter(ChatStatistics.id == statistics_id).first()
 
         if statistics:
             statistics.chatroom_id = chatroom_id
-            statistics.average_chat_duration = average_chat_duration
-            statistics.average_tokens = average_tokens
-            
-            # ChatRoom을 통해 AI의 id를 찾고, AI의 usage에서 total_tokens를 가져옵니다.
-            chatroom = db.query(ChatRoom).filter(ChatRoom.id == chatroom_id).first()
-            if chatroom:
-                ai = db.query(AI).filter(AI.id == chatroom.ai_id).first()
-                if ai:
-                    existing_usage = json.loads(ai.usage) if ai.usage else {}
-                    ai_total_tokens = existing_usage.get('total_tokens', 0)
-                    
-                    # 기존 total_tokens에 AI의 total_tokens 값을 추가합니다.
-                    statistics.total_tokens = (statistics.total_tokens or 0) + ai_total_tokens
 
-                # total_chat_duration를 업데이트합니다.
-                if statistics.total_chat_duration:
-                    if chatroom.conversation_duration:
-                        statistics.total_chat_duration += chatroom.conversation_duration
-                else:
-                    if chatroom.conversation_duration:
-                        statistics.total_chat_duration = chatroom.conversation_duration
+            # 기존 total_tokens에 AI의 total_tokens 값을 추가합니다.
+            statistics.total_tokens = (statistics.total_tokens or 0) + ai_total_tokens
+            db.commit()  # 먼저 total_tokens를 업데이트 후 commit합니다.
 
+        # statistics가(id) 존재하지 않을 경우 새 statistics를 추가합니다.
         else:
-            chatroom = db.query(ChatRoom).filter(ChatRoom.id == chatroom_id).first()
-            if chatroom:
-                ai = db.query(AI).filter(AI.id == chatroom.ai_id).first()
-                if ai:
-                    existing_usage = json.loads(ai.usage) if ai.usage else {}
-                    ai_total_tokens = existing_usage.get('total_tokens', 0)
-                    
-                    # total_tokens를 새로 지정하고 AI의 total_tokens 값을 추가합니다.
-                    total_tokens = ai_total_tokens
-                
-                otal_chat_duration = chatroom.conversation_duration or timedelta()
-            else:
-                total_tokens = 0
-                total_chat_duration = None
-            
             statistics = ChatStatistics(
                 id=statistics_id,
                 chatroom_id=chatroom_id,
-                total_chat_duration=total_chat_duration,
-                average_chat_duration=average_chat_duration,
-                total_tokens=total_tokens,
-                average_tokens=average_tokens
+                total_chat_duration=chatroom.conversation_duration if chatroom else None,
+                total_tokens=ai_total_tokens
             )
             db.add(statistics)
+            db.commit()  # total_tokens를 설정하고 바로 commit합니다.
+
+        # 모든 ChatStatistics의 total_tokens를 합산한 후 평균을 계산합니다.
+        all_statistics = db.query(ChatStatistics).all()
+        total_tokens_sum = sum((stats.total_tokens or 0) for stats in all_statistics)
+        total_duration_sum = sum(
+            (stats.total_chat_duration.total_seconds() if stats.total_chat_duration else 0) 
+            for stats in all_statistics
+        )
+        chatroom_count = len(all_statistics) or 1
+        
+        # 평균값들을 업데이트합니다.
+        average_tokens = total_tokens_sum / chatroom_count
+        average_chat_duration_seconds = total_duration_sum / chatroom_count
+        average_chat_duration = timedelta(seconds=average_chat_duration_seconds)
+
+        statistics.average_chat_duration = average_chat_duration
+        statistics.average_tokens = average_tokens
 
         db.commit()
         db.refresh(statistics)
 
         return statistics
 
-
 def update_end_time(json_data: dict):
-
-    id = json_data.get('id')
-    end_time = json_data.get('end_time')
-
-    # end_time을 datetime 객체로 변환합니다.
-    end_time = datetime.fromisoformat(end_time) if end_time else None
+    chatroom_id = json_data.get('id')
+    end_time_str = json_data.get('end_time')
+    end_time = datetime.fromisoformat(end_time_str) if end_time_str else None
 
     with SessionLocal() as db:
-        # 주어진 id로 ChatRoom을 조회합니다.
-        chatroom = db.query(ChatRoom).filter(ChatRoom.id == id).first()
+        # id로 ChatRoom을 조회합니다.
+        chatroom = db.query(ChatRoom).filter(ChatRoom.id == chatroom_id).first()
         
         if chatroom:
             chatroom.end_time = end_time
+            chatroom.conversation_duration = end_time - chatroom.start_time if end_time else None
             db.commit()
+
+            # ChatStatistics를 조회하고 업데이트합니다.
+            statistics = db.query(ChatStatistics).filter(ChatStatistics.chatroom_id == chatroom_id).first()
+            if statistics:
+                if statistics.total_chat_duration:
+                    if chatroom.conversation_duration:
+                        statistics.total_chat_duration += chatroom.conversation_duration
+                else:
+                    if chatroom.conversation_duration:
+                        statistics.total_chat_duration = chatroom.conversation_duration
+                
+                db.commit()
+
+            db.refresh(chatroom)
+            db.refresh(statistics)
         else:
             print("해당하는 id의 chatroom은 존재하지 않습니다.")
 
 
 # read
 
-# time_and_token_search
 def time_and_token_search(chatroom_id: int):
     with SessionLocal() as session:
 
-        # 현재 시간을 담을 변수
+        # 현재 시간을 담을 변수입니다.
         current_time = datetime.now()
 
-        # ChatRoom과 AI 테이블을 조인하여 end_time와 total_tokens를 가져옵니다.
+        # ChatRoom과 AI 테이블을 조인하여 total_tokens를 가져옵니다.
         result = (
             session.query(ChatStatistics.total_tokens)
             .join(ChatStatistics, ChatRoom.id == ChatStatistics.chatroom_id)
@@ -356,7 +379,7 @@ def time_and_token_search(chatroom_id: int):
 
         total_tokens = result
 
-        # 현재 시간, end_time, total_tokens를 반환합니다.
+        # last_chat_time, 현재 시간, total_tokens를 반환합니다.
         return {
             "last_chat_time" : last_chat_time,
             "current_time": current_time,
