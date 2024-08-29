@@ -44,31 +44,35 @@ def chatroom_add():
 #지훈님
     ## AI 봇 추가하기 & AI 봇 업데이트하기 - 테이블 -> AI
 
-def service_test():
+def AI_add(id, name, initial_prompt, max_tokens, prompt_tokens, completion_tokens, ai_speech_log):
     # AI 봇 추가 또는 업데이트 테스트
-    ai_data = {
-        'id': 1,
-        'name': 'Test AI',
-        'initial_prompt': 'Hello',
-        'max_tokens': 150,
-        'prompt_tokens': 100,
-        'completion_tokens': 100,
-        'total_tokens': 100,
-        'ai_speech_log': '["Hello!"]'
+    json_data = {
+        'id': id,
+        'name': name,
+        'initial_prompt': initial_prompt,
+        'max_tokens': max_tokens,
+        'prompt_tokens': prompt_tokens,
+        'completion_tokens': completion_tokens,
+        'total_tokens': total_tokens,
+        'ai_speech_log': ai_speech_log
     }
-    ai_add_or_update_data(ai_data)
+
+
+    AI = add_all(json_data, 'AI')
 
     ## 사용자 정보 추가하기 & 사용자 정보 업데이트하기 - 유저테이블
-    
-    user_data = {
-        'id': 1,
-        'contact_info': 'test1@example.com',
-        'friend_status': True,
-        'user_speech_log': '["Hi there!"]'
+def User_add(id, contact_info, friend_status, user_speech_log):
+    json_data = {
+        'id': id,
+        'contact_info': contact_info,
+        'friend_status': friend_status,
+        'user_speech_log': user_speech_log
     }
-    user = user_add_or_update_data(user_data)
 
-    chatroom_add()
+    User = add_all(json_data, 'User')
+
+    
+    
 
 #다인님
 ## 사용자 메시지 로그 저장하기 - 보수공사 후 진행 ->유저인포테이블
