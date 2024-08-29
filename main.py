@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from openai import OpenAI
 
-from service.service import get_gpt_response
+from service.service import get_gpt_response, chatroom_add
 from utils.utils import create_kakao_response
 
 # from utils.utils import add_history, create_kakao_response
@@ -51,6 +51,13 @@ async def chat(chat_request: Request):
         add_history(talk_history,"assistant", gpt_message)
         kakao_response = create_kakao_response(gpt_message)
     
+
+        # 추가
+        # chatroom_add 함수를 호출하여 채팅방 정보를 저장하거나 업데이트합니다.
+        chatroom_add()
+
+
+
         return JSONResponse(content=kakao_response)
     
 

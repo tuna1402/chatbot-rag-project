@@ -29,16 +29,40 @@ def service_test():
     pass
 
 
+
+
+
+
 ## 채팅방 추가하기 & 채팅방 업데이트하기
-def chatroom_add():
+def chatroom_add(id, user_id, ai_id, chatbot_id, username, preferences, location, device):
     
     json_data = {
-        'id': 1,
-        'user_id': 1,
-        'ai_id': 1,
-        'chatbot_id': 1
-    }
+        'id': id,
+        'user_id': user_id,
+        'ai_id': ai_id,
+        'chatbot_id': chatbot_id,
+        
+        # 여기에 추가 정보를 포함시킵니다.
+        'additional_info': {
+            'user_context': {
+                'username': username,
+                'preferences': preferences
+            },
+            'session_details': {
+                'location': location,
+                'device': device
+            }
+        }
+    }        
+    # 메모리에서의 값을 print로 출력합니다.
+    print(f"Username: {username}")
+    print(f"Preferences: {preferences}")
+    print(f"Location: {location}")
+    print(f"Device: {device}")
+        
+    
     chatroom = add_all(json_data, 'Chatroom')
+    return chatroom
 
 
 #지훈님
@@ -72,7 +96,18 @@ def User_add(id, contact_info, friend_status, user_speech_log):
     User = add_all(json_data, 'User')
 
     
-    
+
+
+
+
+
+
+
+
+
+
+
+
 
 #다인님
 ## 사용자 메시지 로그 저장하기 - 보수공사 후 진행 ->유저인포테이블
