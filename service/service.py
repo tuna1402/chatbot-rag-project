@@ -44,7 +44,7 @@ def chatroom_add():
 #지훈님
     ## AI 봇 추가하기 & AI 봇 업데이트하기 - 테이블 -> AI
 
-def AI_add(id, name, initial_prompt, max_tokens, prompt_tokens, completion_tokens, ai_speech_log):
+def AI_add(id, name, initial_prompt, max_tokens, prompt_tokens, completion_tokens, total_tokens, ai_speech_log):
     # AI 봇 추가 또는 업데이트 테스트
     json_data = {
         'id': id,
