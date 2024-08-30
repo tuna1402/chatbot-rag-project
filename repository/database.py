@@ -1,8 +1,11 @@
 import json
+from fastapi import Depends
 from sqlalchemy import func
 from repository.base import SessionLocal, Base, engine
 from datetime import datetime, timedelta
 from models.models import AI, User, Chatbot, ChatRoom, UserInfo, ChatStatistics
+from sqlalchemy.orm import Session
+
 
 # last_chat_log_time() 함수를 호출한 시간을 마지막 채팅 시간(last_chat_time)으로 저장합니다.
 # get_last_chat_log_time() 함수를 호출할 시 마지막 채팅 시간을 return합니다.
@@ -43,13 +46,13 @@ def get_last_chat_log_time():
 
 # create&update
 
-def add_all(json_data: dict, model_name: str):
-
+def add_all(json_data: dict, model_name: str, db: Session):
+    
     # model_name에 따라 함수를 호출합니다.
     if model_name == 'AI':
         return ai_add_or_update_data(json_data)
     elif model_name == 'User':
-        return user_add_or_update_data(json_data)
+        return user_add_or_update_data(json_data, db)
     elif model_name == 'Chatbot':
         return chatbot_add_or_update_data(json_data)
     elif model_name == 'ChatRoom':
@@ -60,7 +63,7 @@ def add_all(json_data: dict, model_name: str):
         return chat_statistics_add_or_update_data(json_data)
 
 def ai_add_or_update_data(json_data: dict):
-
+    db_session()
     # Json 데이터를 파싱합니다.
     ai_id = json_data.get('id')
     name = json_data.get('name')
@@ -74,7 +77,9 @@ def ai_add_or_update_data(json_data: dict):
     ai_speech_log = json_data.get('ai_speech_log', '[]')
     
     with SessionLocal() as db:
+        print(f"Session is active: {db.is_active}")
         ai = db.query(AI).filter(AI.id == ai_id).first()
+        print(f"Session is still active: {db.is_active}")
 
         # 기존 ai 데이터를 업데이트합니다.
         if ai:
@@ -108,15 +113,19 @@ def ai_add_or_update_data(json_data: dict):
 
         return ai
 
-def user_add_or_update_data(json_data: dict):
+def user_add_or_update_data(json_data: dict, db: Session):
+
+
 
     user_id = json_data.get('id')
     contact_info = json_data.get('contact_info')
     friend_status = json_data.get('friend_status')
     user_speech_log = json_data.get('user_speech_log', '[]')
-
+    print(f"db_session", db)
     with SessionLocal() as db:
+        print(f"Session is active: {db.is_active}")
         user = db.query(User).filter(User.id == user_id).first()
+        print(f"Session is still active: {db.is_active}")
         
         # 기존 사용자 데이터를 업데이트합니다.
         if user:

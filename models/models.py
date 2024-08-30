@@ -13,11 +13,13 @@ class AI(Base):
     __tablename__ = 'ai'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(VARCHAR(255))
-    initial_prompt = Column(Text)
-    max_tokens = Column(Integer)
-    usage = Column(Text)
-    ai_speech_log = Column(Text, default='[]')
+    name = Column(VARCHAR(255)) #name이 gpt이름
+    initial_prompt = Column(Text) 
+    max_tokens = Column(Integer) 
+    usage = Column(Text) #토큰 값들을 json형식으로 ㄱㄱ
+    ai_speech_log = Column(Text, default='[]') #content 
+
+
 
 # User
 class User(Base):
