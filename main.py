@@ -8,7 +8,7 @@ from openai import OpenAI
 import uvicorn
 
 from repository.database import db_session
-from service.service import get_gpt_response, ruser, ruser_add
+from service.service import get_gpt_response, ruser, ruser_update
 from utils.utils import create_kakao_response
 
 # from utils.utils import add_history, create_kakao_response
@@ -75,47 +75,45 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
         'id': 1,
         'contact_info': 'test1@example.com',
         'friend_status': True,
-        'user_speech_log': '["반가워요"]'
+        'user_speech_log': '["제가 원하는 디자인은 미니멀리즘 스타일입니다. 예산은 천만원 나이는 여든한살입니다. 현재 대구에 거주 중이에요."]'
     }
         
         chatbot = {
-        'id': 2,
+        'id': 1,
         'name': 'Test Chatbot',
-        'ai_id': 2
+        'ai_id': 1
         }
 
         chatroom = {
         'id': 1,
         'user_id': 1,
         'ai_id': 1,
-        'chatbot_id': 1
+        'chatbot_id': 1,
+        'username': 'user',
+        'preferences': 'preferences',
+        'location': 'location',
+        'device': 'device'
     }
         
         userinfo = {
         'id': 1,
         'user_id': 1,
         'image': 'image.png',
-        'trend_design': '["Design2"]',
-        'budget': 1000,
-        'age': 25,
-        'region': 'Region1'
     }        
         
         chat_statistics = {
         'id': 1,
         'chatroom_id': 1
         }
-
-        ruser(user, userinfo, AI, chatbot, chatroom, chat_statistics, db)
-        ruser_add(user, userinfo, AI, chatbot, chatroom, chat_statistics)
         
+        # 새로 생성합니다.
+        ruser(user, userinfo, AI, chatbot, chatroom, chat_statistics, db)
+        
+        # 기존 데이터를 업데이트합니다.
+        # ruser_update(user, userinfo, AI, chatbot, chatroom, chat_statistics, db)
+
         return JSONResponse(content=kakao_response)
 
-
-    
-    
-
-    
     except Exception as e:
         # 오류가 발생할 경우, 콘솔에 오류를 출력하고 500 상태 코드를 반환합니다.
         print(f"OpenAI API request failed: {str(e)}")
