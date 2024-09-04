@@ -3,7 +3,6 @@
 /db/
 /docs/
 
-*.pkl
 *.png
 
 test.py
