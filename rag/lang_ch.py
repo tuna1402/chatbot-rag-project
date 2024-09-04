@@ -155,8 +155,8 @@ from langchain_core.prompts import MessagesPlaceholder
 #     AIMessage(content=ai_answer[0].page_content),
 # ])
 
-def rag_response(question: str, retriever_chain):
-    chat_history = []
+def rag_response(question: str, retriever_chain, chat_history):
+
     ai_answer = retriever_chain.invoke({"input": question, "chat_history": chat_history})
 
     chat_history.extend([
