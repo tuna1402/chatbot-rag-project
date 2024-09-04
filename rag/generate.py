@@ -11,7 +11,7 @@ pinecone_retriever = create_pinecone_retriever(
     alpha=0.75
 )
 
-search_results = pinecone_retriever.invoke("전기 공사 인건비 얼마야?")
+# search_results = pinecone_retriever.invoke("전기 공사 인건비 얼마야?")
 # for result in search_results:
 #     print(result.page_content)
 #     print('\n')
