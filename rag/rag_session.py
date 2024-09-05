@@ -1,4 +1,4 @@
-from generate import pinecone_retriever
+from all_def import create_pinecone_retriever
 from langchain_openai import ChatOpenAI
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -7,11 +7,20 @@ from langchain.schema import HumanMessage, AIMessage
 
 
 class RAGSession:
-    def __init__(self):
+    def __init__(self, model="gpt-4o-mini", temparature=0.5, max_tokens=750, 
+                 index_name='interior-rag', namespace='interior-rag', encoder_path="./sparse_encoder.pkl", top_k=1, alpha=0.75):
+        
         self.chat_history = []
-        self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5, max_tokens=750)
-        self.retriever = pinecone_retriever
+        self.llm = ChatOpenAI(model=model, temperature=temparature, max_tokens=max_tokens)
+        self.retriever = create_pinecone_retriever(
+            
+            index_name=index_name,
+            namespace=namespace,
+            encoder_path=encoder_path,
+            top_k=top_k,
+            alpha=alpha
 
+        )
 
         system_prompt = (
             "You are an assistant helping with interior queries. "
