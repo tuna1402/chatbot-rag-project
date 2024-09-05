@@ -234,21 +234,20 @@ def chatroom_add_or_update(json_data: dict, db: Session):
             return chatroom
 
 def userinfo_add_or_update_data(json_data: dict, db: Session):
-
     userinfo_id = json_data.get('id')
     user_id = json_data.get('user_id')
     image = json_data.get('image', '') 
-
     with SessionLocal() as db:
         # userinfo를 조회합니다.
         userinfo = db.query(UserInfo).filter(UserInfo.id == userinfo_id).first()
         
         # user_speech_log에서 가장 최근의 로그 항목을 조회합니다.
         user = db.query(User).filter(User.id == user_id).first()
+
         if user and user.user_speech_log:
             user_speech_log = json.loads(user.user_speech_log)
+            print(user_speech_log)
             last_log_text = user_speech_log[-1] if user_speech_log else ""
-            
             # util.py의 함수를 통해 스타일, 예산, 나이, 지역 정보를 추출합니다.
             extracted_style = db_util.extract_style(last_log_text)
             extracted_budget = db_util.extract_budget(last_log_text)
@@ -311,6 +310,7 @@ def userinfo_add_or_update_data(json_data: dict, db: Session):
         db.refresh(userinfo)
 
         return userinfo
+
 
 def chat_statistics_add_or_update_data(json_data: dict, db: Session):
     
