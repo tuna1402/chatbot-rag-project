@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="chatbot-rag-project">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/chatbot-rag-project.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
