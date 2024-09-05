@@ -12,16 +12,19 @@ METRIC = "dotproduct"
 EMBEDDER_TYPE = "upstage"
 BATCH_SIZE = 32
 
-def main(question):
+def preprocess_documents():
 
     if not os.path.exists(SPARSE_ENCODER_PATH):
 
         process = Preprocess(folder_path=FOLDER_PATH, sparse_encoder_path=SPARSE_ENCODER_PATH)
         process.run()
-        contents, metadatas = process.contents, process.metadatas
+        return process.contents, process.metadatas
+
     else:
         print(f"전처리 과정을 건너 뜁니다. {SPARSE_ENCODER_PATH}가 이미 존재합니다.")
-        contents, metadatas = None, None
+        return None, None
+
+def upsert_documents(contents, metadatas):
 
     try:
         upsert = Upsert(rag_name=RAG_NAME, dimension=DIMENSION, metric=METRIC, file_path=SPARSE_ENCODER_PATH)
@@ -30,14 +33,24 @@ def main(question):
     except Exception as e:
         print(f"에러가 발생했습니다. 에러 내용: {e}. 임베딩 업로드를 건너 뜁니다.")
 
-    user_session = RAGSession()
-    response = user_session.ask_question(question)
+def main(user_id:str, question):
 
-    print(response)
-    print(user_session.chat_history)
+    contents, metadatas = preprocess_documents()
 
-    return response, user_session.chat_history
+    if contents and metadatas:
+        upsert_documents(contents, metadatas)
+
+    user_id = RAGSession()
+    response = user_id.ask_question(question)
+    hisory = user_id.chat_history
+
+    return  response, hisory 
 
 if __name__ == "__main__":
-    question = "15평 아파트 인테리어 평균 비용"
-    main(question)
+
+    user_id = 'abc'
+    utterance = "15평 피아노 학원 인테리어 견적 뽑아줘"
+
+    res, his = main(user_id, utterance)
+    print(res)
+    

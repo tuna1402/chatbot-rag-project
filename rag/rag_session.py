@@ -7,8 +7,8 @@ from langchain.schema import HumanMessage, AIMessage
 
 
 class RAGSession:
-    def __init__(self, model="gpt-4o-mini", temparature=0.5, max_tokens=750, 
-                 index_name='interior-rag', namespace='interior-rag', encoder_path="./sparse_encoder.pkl", top_k=1, alpha=0.75):
+    def __init__(self, model="gpt-4o-mini", temparature=0.25, max_tokens=750, 
+                 index_name='interior-rag', namespace='interior-rag', encoder_path="./sparse_encoder.pkl", top_k=5, alpha=0.75):
         
         self.chat_history = []
         self.llm = ChatOpenAI(model=model, temperature=temparature, max_tokens=max_tokens)
@@ -26,6 +26,7 @@ class RAGSession:
             "You are an assistant helping with interior queries. "
             "but if the context does not contain the answer, "
             "use your own knowledge to answer the question."
+            "use friendly way to talk"
             "\n\n"
             "{context}"
         )
