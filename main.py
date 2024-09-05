@@ -3,12 +3,12 @@ import os
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 from sqlalchemy.orm import Session
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from openai import OpenAI
 import uvicorn
 
 from repository.database import db_session
-from service.service import get_gpt_response, ruser, ruser_update
+from service.service import get_gpt_response, ruser, ruser_update, get_chatrooms
 from utils.utils import create_kakao_response
 
 # from utils.utils import add_history, create_kakao_response
@@ -27,10 +27,11 @@ talk_history = []
 client.api_key = os.getenv('OPENAI_API_KEY')
 print("OpenAI API Key:", client.api_key)
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
+@app.get("/", response_class=HTMLResponse)
+async def read_index():
+    with open('chatroom_list.html', 'r') as file:
+        html_content = file.read()
+    return HTMLResponse(content=html_content)
 
 
 @app.post("/chat")
@@ -107,10 +108,10 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
         }
         
         # 새로 생성합니다.
-        ruser(user, userinfo, AI, chatbot, chatroom, chat_statistics, db)
+        # ruser(user, userinfo, AI, chatbot, chatroom, chat_statistics, db)
         
         # 기존 데이터를 업데이트합니다.
-        # ruser_update(user, userinfo, AI, chatbot, chatroom, chat_statistics, db)
+        ruser_update(user, userinfo, AI, chatbot, chatroom, chat_statistics, db)
 
         return JSONResponse(content=kakao_response)
 
@@ -123,7 +124,12 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
 def add_history(talk_history, role, message):
     talk_history.append({"role": role, "content": message})
     return talk_history
-    
+
+@app.get("/chatrooms")
+async def chatrooms_list(db: Session = Depends(db_session)):
+    chatrooms = get_chatrooms(db)
+    return {"chatrooms": [f"{chatroom.id}번째 채팅방" for chatroom in chatrooms]}
+
 if __name__ == '__main__':
     # Uvicorn을 사용하여 FastAPI 애플리케이션을 실행합니다.
     uvicorn.run(app, host='0.0.0.0', port=5000)

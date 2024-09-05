@@ -234,7 +234,6 @@ def chatroom_add_or_update(json_data: dict, db: Session):
             return chatroom
 
 def userinfo_add_or_update_data(json_data: dict, db: Session):
-
     userinfo_id = json_data.get('id')
     user_id = json_data.get('user_id')
     image = json_data.get('image', '') 
@@ -438,3 +437,6 @@ def time_and_token_search(chatroom_id: int, db: Session):
             "current_time": current_time,
             "total_tokens": total_tokens
         }
+    
+def get_chat_rooms(db):
+    return db.query(ChatRoom).all()
