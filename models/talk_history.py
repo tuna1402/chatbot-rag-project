@@ -6,9 +6,11 @@ class ChatRoom:
         self.user_id = user_id
         self.user_info = userinfo_id
         self.chat_history = []  # 배열을 이용한 채팅 기록 저장소
-        
+        #self.chatbot_name = chatbot_name
     
 
+    # def get_chatbot_name(self):
+    #     return self.chatbot_name
         
     def get_chatroom_id(self):
         return self.chatroom_id
@@ -22,7 +24,7 @@ class ChatRoom:
     def get_user_id(self):
         return self.user_id
     
-    def get_userinfo_id(self)
+    def get_userinfo_id(self):
         return  self.user_info
     
     def add_message(self, message):
@@ -32,6 +34,10 @@ class ChatRoom:
     
     def get_chat_history(self):
         """현재까지의 채팅 기록을 반환하는 함수."""
+        
+        
+            
+        
         return self.chat_history
 
     def clear_chat_history(self):
@@ -47,11 +53,11 @@ class ChatRoom:
 
 
 # 사용 예시
-chat_room = ChatRoom(chatroom_id=1, ai_id=100, chatbot_id='ChatBot_X', user_id=500)
+# chat_room = ChatRoom(chatroom_id=1, ai_id=100, chatbot_id='ChatBot_X', user_id=500)
 
-chat_room.add_message("안녕하세요!")
-chat_room.add_message("무엇을 도와드릴까요?")
-print(chat_room.get_chat_history())
+# chat_room.add_message("안녕하세요!")
+# chat_room.add_message("무엇을 도와드릴까요?")
+# print(chat_room.get_chat_history())
 
-chat_room.clear_chat_history()
-print(chat_room.get_chat_history())
+# chat_room.clear_chat_history()
+# print(chat_room.get_chat_history())

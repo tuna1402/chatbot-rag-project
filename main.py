@@ -11,7 +11,7 @@ from models.dto import gpt_message
 
 
 
-from models.get_data import get_ai, get_user
+from models.get_data import get_ai, get_user, update_ai, update_user
 from models.get_data import get_chat_statistics, get_chatbot, get_chatroom, get_userinfo
 from models.talk_history import ChatRoom
 from repository.database import db_session
@@ -125,7 +125,7 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
         # 추가
         # # chatroom_add 함수를 호출하여 채팅방 정보를 저장하거나 업데이트합니다.
         print("gpt 리스폰스",gpt_all)
-        print("ai 시작")
+        print("ai 시작", gpt_all)
         AI = get_ai(gpt_all)
         print("aaaaaa", AI)
         
@@ -150,11 +150,12 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
                 print("user_id, chat_room : ",user_id, chat_room)
                 if(history_user_id == user_id):
                     room:ChatRoom = chat_history[user_id]
-                    
+                    user = update_user(room.get_user_id(), new_user);
+                    update_AI = update_ai(room.get_ai_id(), gpt_all)
                     # ruser_update(user, AI, db)
                     room.add_message({"role":"user", "content": message})
                     room.add_message({"role":"assistant", "content": gpt_response})
-                    ruser_update(user_id, message , AI, gpt_response ,db, room)
+                    ruser_update(user, update_AI ,db, room)
                     print("history : ", room.get_chat_history())
 
     

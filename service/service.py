@@ -2,7 +2,7 @@ from http import client
 import pprint
 from pydantic import BaseModel
 from openai import OpenAI
-from models.get_data import get_chat_statistics, get_chatbot, get_chatroom, get_userinfo
+from models.get_data import get_chat_statistics, get_chatbot, get_chatroom, get_userinfo, update_chatbot, update_chatroom
 from models.talk_history import ChatRoom
 from repository.database import add_all, db_session
 from utils.utils import create_kakao_response
@@ -69,16 +69,16 @@ def chatroom_update(chatroom : dto.Chatbot_update_datatype, db):
         'chatbot_id': chatroom['chatbot_id'],
         
         # 여기에 추가 정보를 포함시킵니다.
-        'additional_info': {
-            'user_context': {
-                'username': chatroom['username'],
-                'preferences': chatroom['preferences']
-            },
-            'session_details': {
-                'location': chatroom['location'],
-                'device': chatroom['device']
-            }
-        }
+        # 'additional_info': {
+        #     'user_context': {
+        #         'username': chatroom['username'],
+        #         'preferences': chatroom['preferences']
+        #     },
+        #     'session_details': {
+        #         'location': chatroom['location'],
+        #         'device': chatroom['device']
+        #     }
+        # }
     } 
     
     chatroom = add_all(json_data, 'Chatroom', db)
@@ -156,14 +156,14 @@ def userinfo_add(userinfo : dto.UserInfo_add_datatype, db):
     print("제이슨", json_data)
     userinfo2 = add_all(json_data, 'UserInfo', db)
     print("테스트333", userinfo2) 
-    return userinfo
+    return userinfo2
 
 def userinfo_update(userinfo : dto.UserInfo_update_datatype, db):
 
     json_data = {
         'id': userinfo["id"],
         'user_id': userinfo["user_id"],
-        'image': userinfo["image"]
+        # 'image': userinfo["image"]
     }
     userinfo = add_all(json_data, 'UserInfo', db)
     return userinfo
@@ -182,7 +182,7 @@ def chatbot_update(chatbot : dto.Chatbot_update_datatype, db):
 
     json_data = {
         'id': chatbot["id"],
-        'name': chatbot["name"],
+        # 'name': chatbot["name"],
         'ai_id': chatbot["ai_id"]
     }
     chatbot = add_all(json_data, 'Chatbot', db)
@@ -221,7 +221,7 @@ def ruser(User, AI, chatbot_name, db):
     new_chatbot = chatbot_add(get_chatbot(chatbot_name, new_ai.id), db)
     new_chatroom = chatroom_add(get_chatroom(new_user.id, new_ai.id, new_chatbot.id), db)
     new_chatstatics = ChatStatistics_add(get_chat_statistics(new_chatroom.id), db)
-    return ChatRoom(new_chatroom.id, new_ai.id, new_chatroom.chatbot_id, new_user.id)
+    return ChatRoom(new_chatroom.id, new_ai.id, new_chatroom.chatbot_id, new_user.id, new_userinfo.id)
 
 def create_userinfo(Userinfo:dto.UserInfo_add_datatype, new_user:dto.User_update_datatype):
     new_userinfo = {
@@ -231,15 +231,15 @@ def create_userinfo(Userinfo:dto.UserInfo_add_datatype, new_user:dto.User_update
     return new_userinfo
 
 
-def ruser_update(User,  AI,  db, room : ChatRoom):
+def ruser_update(User, AI,  db, room : ChatRoom):
 
-    new_user = user_add(User, db)
-    new_userinfo = userinfo_add(create_userinfo(get_userinfo({"id" : room.get_userinfo_id(), "user_id": room.get_user_id()}), new_user), db)
+    new_user = user_update(User, db)
+    new_userinfo = userinfo_update({"id" : room.get_userinfo_id(), "user_id": room.get_user_id()}, db)
     new_ai = ai_add(AI, db)
-    new_chatbot = chatbot_add(get_chatbot(chatbot_name, new_ai.id), db)
-    new_chatroom = chatroom_add(get_chatroom(new_user.id, new_ai.id, new_chatbot.id), db)
-    new_chatstatics = ChatStatistics_add(get_chat_statistics(new_chatroom.id), db)
-    return ChatRoom(new_chatroom.id, new_ai.id, new_chatroom.chatbot_id, new_user.id)
+    new_chatbot = chatbot_update(update_chatbot(room.get_chatbot_id(), new_ai.id), db)
+    new_chatroom = chatroom_update(update_chatroom(room.get_chatroom_id(), new_user.id, new_ai.id, new_chatbot.id), db)
+    # new_chatstatics = ChatStatistics_add(get_chat_statistics(new_chatroom.id), db)
+    # return ChatRoom(new_chatroom.id, new_ai.id, new_chatroom.chatbot_id, new_user.id)
 
     # user_update(User, db)
     # userinfo_update(Userinfo, db)

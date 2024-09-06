@@ -1,4 +1,5 @@
 import json
+import pprint
 
 
 
@@ -68,15 +69,16 @@ def get_chatroom(user_id, ai_id,chatbot_id):
     return chatroom
 
 
-def update_ai(AI):
+def update_ai(AI_id,AI):
     # 객체에서 필요한 데이터만 추출
+    print("겟에이아이",AI)
     usage = AI.usage
     message = AI.choices[0].message
     ai_speech_log = f'["{message.content}"]'
     print("겟에이아이",ai_speech_log)
     
     new_ai = {
-        'id' : AI.id,
+        'id' : AI_id,
         'name': AI.id,
         'initial_prompt': AI.choices[0].message.role,
         'max_tokens': 500,  # 이 부분은 필요시 수정
@@ -92,10 +94,10 @@ def update_ai(AI):
     
     return new_ai
 
-def update_user(user):
+def update_user(user_id, user):
     
     new_user =  {
-        'id' : user['id'],
+        'id' : user_id,
         'contact_info': None,
         'friend_status': user['friend_status'],
         'user_speech_log': f'["{user['user_speech_log']}"]'
@@ -103,10 +105,10 @@ def update_user(user):
     
     return new_user
 
-def update_chatbot(id, chatbot_name, ai_id):
+def update_chatbot(id, ai_id):
     new_chatbot = {
         'id' : id,
-        'name': chatbot_name,
+        # 'name': chatbot_name,
         'ai_id': ai_id
         }
     
