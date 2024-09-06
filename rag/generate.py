@@ -1,4 +1,4 @@
-from all_def import create_pinecone_retriever
+from rag.all_def import create_pinecone_retriever
 import os
 
 pinecone_api_key = os.getenv("PINECONE_API_KEY")

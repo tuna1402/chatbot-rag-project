@@ -1,4 +1,5 @@
-from all_def import create_pinecone_retriever
+import os
+from rag.all_def import create_pinecone_retriever
 from langchain_openai import ChatOpenAI
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -7,6 +8,9 @@ from langchain.schema import HumanMessage, AIMessage
 
 
 class RAGSession:
+    
+
+
     def __init__(self, model="gpt-4o-mini", temparature=0.25, max_tokens=750, 
                  index_name='interior-rag', namespace='interior-rag', encoder_path="./sparse_encoder.pkl", top_k=5, alpha=0.75):
         
@@ -73,7 +77,7 @@ class RAGSession:
 
 
 if __name__ == "__main__":
-
+    
     user_session1 = RAGSession()
     user_session2 = RAGSession()
     # response1 = user_session1.ask_question("What is the best color for a small living room?")

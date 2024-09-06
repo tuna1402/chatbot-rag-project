@@ -1,4 +1,4 @@
-from all_def import pdf_reader_and_split, divide_metacon, corpus_gen, token_split
+from rag.all_def import pdf_reader_and_split, divide_metacon, corpus_gen, token_split
 import os
 
 # openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -44,10 +44,10 @@ class Preprocess():
         self.corpus_gen()
         print("corpus finished")
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    folder_path = './docs'
-    sparse_encoder_path = './pkl_name.pkl'
+#     folder_path = './docs'
+#     sparse_encoder_path = './pkl_name.pkl'
 
-    process = Preprocess(folder_path=folder_path, sparse_encoder_path=sparse_encoder_path)
-    process.run()
+#     process = Preprocess(folder_path=folder_path, sparse_encoder_path=sparse_encoder_path)
+#     process.run()

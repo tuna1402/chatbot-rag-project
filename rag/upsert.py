@@ -1,5 +1,5 @@
-from all_def import create_index, load_sparse_encoder, upsert_doc
-from preprocess import Preprocess
+from rag.all_def import create_index, load_sparse_encoder, upsert_doc
+from rag.preprocess import Preprocess
 from langchain_openai import OpenAIEmbeddings
 from langchain_upstage import UpstageEmbeddings
 import os
@@ -56,8 +56,8 @@ class Upsert():
     def run(self, contents, metadatas, embedder_type:str, batch_size:int):
         self.upsert_file(contents, metadatas, embedder_type, batch_size)
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     
-    upsert = Upsert(rag_name="interior-rag", dimension=4096, metric="dotproduct", file_path="./sparse_encoder.pkl")
-    preprocess = Preprocess()
-    upsert.run(preprocess.contents, preprocess.metadatas, "upstage", 32)
+#     upsert = Upsert(rag_name="interior-rag", dimension=4096, metric="dotproduct", file_path="./sparse_encoder.pkl")
+#     preprocess = Preprocess()
+#     upsert.run(preprocess.contents, preprocess.metadatas, "upstage", 32)

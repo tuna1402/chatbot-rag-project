@@ -1,8 +1,9 @@
 import os
 
-from preprocess import Preprocess
-from upsert import Upsert
-from rag_session import RAGSession
+#from preprocess import Preprocess
+from rag.preprocess import Preprocess
+from rag.upsert import Upsert
+from rag.rag_session import RAGSession
 
 FOLDER_PATH = "./docs"
 SPARSE_ENCODER_PATH = "./sparse_encoder.pkl"
@@ -48,14 +49,14 @@ def main(rag_obj: RAGSession, question: str):
 
     return res, his
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    user_id = 'abc'
-    utterance = "15평 피아노 학원 인테리어 견적 뽑아줘"
+#     user_id = 'abc'
+#     utterance = "15평 피아노 학원 인테리어 견적 뽑아줘"
 
-    user_id = create_rag_session()
-    res = user_id.ask_question(utterance)
-    his = user_id.chat_history
+#     user_id = create_rag_session()
+#     res = user_id.ask_question(utterance)
+#     his = user_id.chat_history
     # print(res, his)
     # print(user_id.ask_question("10평으로 변경해서 알려줘"))
     # print(his)

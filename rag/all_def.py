@@ -15,12 +15,19 @@
 
 '''
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
+UPSTAGE_API_KEY = os.getenv('UPSTAGE_API_KEY')
+LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY')
 
 #======================================================================
 # 1. DATA LOAD(pdf)
 
 from langchain_community.document_loaders import PyPDFLoader
-import os
+
 
 def pdf_loader(file_path):
     
@@ -301,7 +308,7 @@ def create_pinecone_retriever(
         raise ValueError("index 이름이 잘못되었습니다.")
 
     if not pinecone_api_key:
-        pinecone_api_key = os.environ.get("PINECONE_API_KEY")
+        pinecone_api_key = os.getenv('PINECONE_API_KEY')
         if not pinecone_api_key:
             raise ValueError("api key를 설정하세요. PINECONE_API_KEY")
 

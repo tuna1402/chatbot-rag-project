@@ -14,6 +14,7 @@ from models.dto import gpt_message
 from models.get_data import get_ai, get_user, update_ai, update_user
 from models.get_data import get_chat_statistics, get_chatbot, get_chatroom, get_userinfo
 from models.talk_history import ChatRoom
+from rag.main import create_rag_session
 from repository.database import db_session
 from service.service import get_gpt_response, ruser ,ruser_update
 from utils.utils import create_kakao_response
@@ -34,7 +35,11 @@ send_to_rag = []
 
 # OpenAI 클라이언트 API 키를 설정합니다.
 client.api_key = os.getenv('OPENAI_API_KEY')
+PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
+UPSTAGE_API_KEY = os.getenv('UPSTAGE_API_KEY')
+LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY')
 print("OpenAI API Key:", client.api_key)
+
 
 
 @app.post("/chat")
@@ -62,8 +67,7 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
                 'friend_status': is_friend,
                 'user_speech_log': user_message
                 }
-            print("친구친구",is_friend)
-            print("친구친구",user_message)
+
             
             return user
         
@@ -101,6 +105,10 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
         gpt_all = get_gpt_response(client, message)
         
         gpt_response = gpt_all.choices[0].message.content
+        
+        answer = create_rag_session().ask_question(message)
+        
+        print("RAG ANSWER : ", answer)
         #send_to_rag 를 위한 gpt_msg
         # gpt_msg = gpt_message(role='assistant', content=gpt_response)
          #send_to_rag 를 위한 gpt_msg
