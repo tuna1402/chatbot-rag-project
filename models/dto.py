@@ -99,3 +99,5 @@ class talk_history (BaseModel):
     ai_id : str 
     user_id : int
     gpt_message : List[gpt_message]
+
+

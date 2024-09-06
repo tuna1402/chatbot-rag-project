@@ -2,6 +2,7 @@ from http import client
 import pprint
 from pydantic import BaseModel
 from openai import OpenAI
+from models.get_data import get_chat_statistics, get_chatbot, get_chatroom, get_userinfo
 from models.talk_history import ChatRoom
 from repository.database import add_all, db_session
 from utils.utils import create_kakao_response
@@ -24,8 +25,9 @@ def get_gpt_response(client: OpenAI, message):
 
         # OpenAI로부터 받은 응답 메시지를 추출합니다.
     gpt_message = response.choices[0].message.content
+    gpt_all = response
     print(gpt_message)
-    return gpt_message
+    return gpt_all
 
 
 def service_test():
@@ -35,24 +37,24 @@ def service_test():
 
 
 ## 채팅방 추가하기 & 채팅방 업데이트하기
-def chatroom_add(chatroom : dto.Chatbot_add_datatype, db):
+def chatroom_add(chatroom : dto.Chatroom_add_datatype, db):
     
     json_data = {
         'user_id': chatroom['user_id'],
         'ai_id': chatroom['ai_id'],
         'chatbot_id': chatroom['chatbot_id'],
         
-        # 여기에 추가 정보를 포함시킵니다.
-        'additional_info': {
-            'user_context': {
-                'username': chatroom['username'],
-                'preferences': chatroom['preferences']
-            },
-            'session_details': {
-                'location': chatroom['location'],
-                'device': chatroom['device']
-            }
-        }
+        # # 여기에 추가 정보를 포함시킵니다.
+        # 'additional_info': {
+        #     'user_context': {
+        #         'username': chatroom['username'],
+        #         'preferences': chatroom['preferences']
+        #     },
+        #     'session_details': {
+        #         'location': chatroom['location'],
+        #         'device': chatroom['device']
+        #     }
+        # }
     } 
     
     chatroom = add_all(json_data, 'ChatRoom', db)
@@ -174,6 +176,7 @@ def chatbot_add(chatbot : dto.Chatbot_add_datatype, db):
         'ai_id': chatbot["ai_id"]
     }
     chatbot = add_all(json_data, 'Chatbot', db)
+    return chatbot
 
 def chatbot_update(chatbot : dto.Chatbot_update_datatype, db):
 
@@ -210,33 +213,40 @@ def ChatStatistics_update(ChatStatistics, db):
 
     return ChatStatistics
 
-def ruser(User, Userinfo, AI, chatbot, chatroom, chatStatitics, db):
+def ruser(User, AI, chatbot_name, db):
+        
     new_user = user_add(User, db)
-    new_userinfo = userinfo_add(create_userinfo(Userinfo, new_user), db)
+    new_userinfo = userinfo_add(create_userinfo(get_userinfo({"user_id": new_user.id,"image":"" }), new_user), db)
     new_ai = ai_add(AI, db)
-    new_chatbot = chatbot_add(chatbot, db)
-    new_chatroom = chatroom_add(chatroom, db)
-    new_chatstatics = ChatStatistics_add(chatStatitics, db)
+    new_chatbot = chatbot_add(get_chatbot(chatbot_name, new_ai.id), db)
+    new_chatroom = chatroom_add(get_chatroom(new_user.id, new_ai.id, new_chatbot.id), db)
+    new_chatstatics = ChatStatistics_add(get_chat_statistics(new_chatroom.id), db)
     return ChatRoom(new_chatroom.id, new_ai.id, new_chatroom.chatbot_id, new_user.id)
 
 def create_userinfo(Userinfo:dto.UserInfo_add_datatype, new_user:dto.User_update_datatype):
     new_userinfo = {
-        'user_id': new_user['user_id'],
+        'user_id': new_user.id,
         'image': Userinfo['image'],
     }   
     return new_userinfo
-    
 
 
+def ruser_update(User,  AI,  db, room : ChatRoom):
 
+    new_user = user_add(User, db)
+    new_userinfo = userinfo_add(create_userinfo(get_userinfo({"id" : room.get_userinfo_id(), "user_id": room.get_user_id()}), new_user), db)
+    new_ai = ai_add(AI, db)
+    new_chatbot = chatbot_add(get_chatbot(chatbot_name, new_ai.id), db)
+    new_chatroom = chatroom_add(get_chatroom(new_user.id, new_ai.id, new_chatbot.id), db)
+    new_chatstatics = ChatStatistics_add(get_chat_statistics(new_chatroom.id), db)
+    return ChatRoom(new_chatroom.id, new_ai.id, new_chatroom.chatbot_id, new_user.id)
 
-def ruser_update(User, Userinfo, AI, chatbot, chatroom, chatStatitics, db):
-    user_update(User, db)
-    userinfo_update(Userinfo, db)
-    ai_update(AI, db)
-    chatbot_update(chatbot, db)
-    chatroom_update(chatroom, db)
-    ChatStatistics_update(chatStatitics, db)
+    # user_update(User, db)
+    # userinfo_update(Userinfo, db)
+    # ai_update(AI, db)
+    # chatbot_update(chatbot, db)
+    # chatroom_update(chatroom, db)
+    # ChatStatistics_update(chatStatitics, db)
 
 
 

@@ -1,10 +1,29 @@
 class ChatRoom:
-    def __init__(self, chatroom_id, ai_id, chatbot_id, user_id):
+    def __init__(self, chatroom_id, ai_id, chatbot_id, user_id, userinfo_id):
         self.chatroom_id = chatroom_id
         self.ai_id = ai_id
         self.chatbot_id = chatbot_id
         self.user_id = user_id
+        self.user_info = userinfo_id
         self.chat_history = []  # 배열을 이용한 채팅 기록 저장소
+        
+    
+
+        
+    def get_chatroom_id(self):
+        return self.chatroom_id
+    
+    def get_ai_id(self):
+        return self.ai_id
+    
+    def get_chatbot_id(self):
+        return self.chatbot_id
+    
+    def get_user_id(self):
+        return self.user_id
+    
+    def get_userinfo_id(self)
+        return  self.user_info
     
     def add_message(self, message):
         """배열(채팅 기록)을 갱신하는 함수. 새 메시지를 추가함."""
