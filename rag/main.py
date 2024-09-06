@@ -33,24 +33,29 @@ def upsert_documents(contents, metadatas):
     except Exception as e:
         print(f"에러가 발생했습니다. 에러 내용: {e}. 임베딩 업로드를 건너 뜁니다.")
 
-def main(user_id:str, question):
+def create_rag_session():
+    
+    return RAGSession()
 
+def main(rag_obj: RAGSession, question: str):
     contents, metadatas = preprocess_documents()
 
     if contents and metadatas:
         upsert_documents(contents, metadatas)
 
-    user_id = RAGSession()
-    response = user_id.ask_question(question)
-    hisory = user_id.chat_history
+    res = rag_obj.ask_question(question)
+    his = rag_obj.chat_history
 
-    return  response, hisory 
+    return res, his
 
 if __name__ == "__main__":
 
     user_id = 'abc'
     utterance = "15평 피아노 학원 인테리어 견적 뽑아줘"
 
-    res, his = main(user_id, utterance)
-    print(res)
-    
+    user_id = create_rag_session()
+    res = user_id.ask_question(utterance)
+    his = user_id.chat_history
+    # print(res, his)
+    # print(user_id.ask_question("10평으로 변경해서 알려줘"))
+    # print(his)
