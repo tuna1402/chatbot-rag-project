@@ -11,10 +11,11 @@ from models.dto import gpt_message
 
 
 
-from models.dummy import get_ai, get_user
+from models.get_data import get_ai, get_user
+from models.get_data import get_chat_statistics, get_chatbot, get_chatroom, get_userinfo
 from models.talk_history import ChatRoom
 from repository.database import db_session
-from service.service import get_gpt_response, ruser, ruser_update
+from service.service import get_gpt_response, ruser ,ruser_update
 from utils.utils import create_kakao_response
 
 # from utils.utils import add_history, create_kakao_response
@@ -38,18 +39,36 @@ print("OpenAI API Key:", client.api_key)
 
 @app.post("/chat")
 async def chat(chat_request: Request, db: Session = Depends(db_session)):
-    try:
-        # 요청으로부터 JSON 데이터를 비동기적으로 가져옵니다.
-        user_message = await chat_request.json()
-        
-        message = user_message.get('userRequest', {}).get('utterance')
+    
+    # 요청으로부터 JSON 데이터를 비동기적으로 가져옵니다.
+        user_response = await chat_request.json()
+        message = user_response.get('userRequest', {}).get('utterance')
 
         # 카카오톡 응답에서 필요한 값 추출
-        chatroom_id = user_message.get('userRequest', {}).get('block', {}).get('id')
-        ai_id = user_message.get('bot', {}).get('id')
-        user_id = user_message.get('userRequest', {}).get('user', {}).get('id')
+        chatroom_id = user_response.get('userRequest', {}).get('block', {}).get('id')
+        chatroom_id2 = user_response.get('userRequest', {}).get('block', {}).get('id')
+
+        ai_id = user_response.get('bot', {}).get('id')
+
+        user_id = user_response.get('userRequest', {}).get('user', {}).get('id')
+
+        is_friend = user_response.get('userRequest', {}).get('user', {}).get('properties', {}).get('isFriend')
+        user_message = user_response.get('userRequest', {}).get('utterance', {})
+        
+        chatbot_name = user_response.get('bot', {}).get('id')
+        
+        def to_get_user(is_friend,user_message):
+            user =  {
+                'friend_status': is_friend,
+                'user_speech_log': user_message
+                }
+            print("친구친구",is_friend)
+            print("친구친구",user_message)
+            
+            return user
         
         
+        new_user = to_get_user(is_friend, user_message)
         
         # send to rag -> 코드 내에서 생성되는 값을 가져옴
         # 챗룸아이디 : ChatRoom_id
@@ -79,9 +98,9 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
         
         # OpenAI API에 요청을 보냅니다.
         # gpt_message = get_gpt_response(client, message)
-        gpt_response = get_gpt_response(client, message)
+        gpt_all = get_gpt_response(client, message)
         
-        
+        gpt_response = gpt_all.choices[0].message.content
         #send_to_rag 를 위한 gpt_msg
         # gpt_msg = gpt_message(role='assistant', content=gpt_response)
          #send_to_rag 를 위한 gpt_msg
@@ -105,81 +124,54 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
 
         # 추가
         # # chatroom_add 함수를 호출하여 채팅방 정보를 저장하거나 업데이트합니다.
+        print("gpt 리스폰스",gpt_all)
+        print("ai 시작")
+        AI = get_ai(gpt_all)
+        print("aaaaaa", AI)
         
+        user = get_user(new_user)
         
-        AI = get_ai()
+        new_chatbot = chatbot_name
         
-        
-        user = get_user()
-        
-        chatbot = {
-        'id': 1,
-        'name': 'Test Chatbot',
-        'ai_id': 1
-        }
-
-        chatroom = {
-            'id': 1,
-            'user_id': 1,
-            'ai_id': 1,
-            'chatbot_id': 1,
-            'username': 'user',
-            'preferences': 'preferences',
-            'location': 'location',
-            'device': 'device'
-        }
-        
-        # gpt_message = {
-        #     "role" : "role a",
-        #     'content' : 'content a',
-        # }
-        
-        
-        
-        userinfo = {
-        'id': 1,
-        'user_id': 1,
-        'image': 'image.png',
-        }        
-        
-        chat_statistics = {
-        'id': 1,
-        'chatroom_id': 1
-        }
-        
-        if kakao not in chat_history:
+        if user_id not in chat_history:
             # 기존 데이터를 생성합니다.
-            new_chatroom = ruser(user, userinfo, AI, chatbot, chatroom, chat_statistics, db)
+            new_chatroom = ruser(user, AI, new_chatbot, db)
             # 각 채팅방에 메시지를 추가 (생성 직후)
             new_chatroom.add_message({"role":"user", "content": message})
+            
             new_chatroom.add_message({"role":"assistant", "content": gpt_response})
             
             print("history : ", new_chatroom.get_chat_history())
-            chat_history["user_id"] = new_chatroom
-            print("history : ", chat_history["user_id"])
-    
-         
-        ## 사용자 존재를 확인 후 업데이트를 진행한다.
-        for history_user_id, chat_room in chat_history.items():
-            print("user_id, chat_room : ",user_id, chat_room)
-            if(history_user_id == "user_id"):
-                room:ChatRoom = chat_history["user_id"]
-                ruser_update(user, userinfo, AI, chatbot, chatroom, chat_statistics, db)
-                room.add_message({"role":"user", "content": message})
-                room.add_message({"role":"assistant", "content": gpt_response})
-                print("history : ", room.get_chat_history())
+            chat_history[user_id] = new_chatroom
+            print("history : ", chat_history[user_id])
+        else:      
+            # 사용자 존재를 확인 후 업데이트를 진행한다.
+            for history_user_id, chat_room in chat_history.items():
+                print("user_id, chat_room : ",user_id, chat_room)
+                if(history_user_id == user_id):
+                    room:ChatRoom = chat_history[user_id]
+                    
+                    # ruser_update(user, AI, db)
+                    room.add_message({"role":"user", "content": message})
+                    room.add_message({"role":"assistant", "content": gpt_response})
+                    ruser_update(user_id, message , AI, gpt_response ,db, room)
+                    print("history : ", room.get_chat_history())
 
     
-        new_user = (user, userinfo, AI, chatbot, chatroom, chat_statistics, db)
-    
+
         
 
         return JSONResponse(content=kakao_response)
+    
+    # try:
+        
 
-    except Exception as e:
-        # 오류가 발생할 경우, 콘솔에 오류를 출력하고 500 상태 코드를 반환합니다.
-        print(f"Chat 엔드포인트 내의 에러: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e) if not isinstance(e, set) else list(e))
+    # except Exception as e:
+    #     # 오류가 발생할 경우, 콘솔에 오류를 출력하고 500 상태 코드를 반환합니다.
+    #     print(f"Chat 엔드포인트 내의 에러: {str(e)}")
+    #     raise HTTPException(status_code=500, detail=str(e) if not isinstance(e, set) else list(e))
+
+
 
 
 def add_history(talk_history, role, message):

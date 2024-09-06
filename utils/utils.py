@@ -16,7 +16,7 @@ def create_kakao_response(gpt_message):
         }
     
     return kakao_response
-
+    
 
 
 
