@@ -309,7 +309,6 @@ def userinfo_add_or_update_data(json_data: dict, db: Session):
         else:
             print('유저인포6')
             userinfo = UserInfo(
-                id=userinfo_id,
                 user_id=user_id,
                 image=None if image == "" else image,
                 trend_design=json.dumps([extracted_style] if extracted_style != "None" else [], ensure_ascii=False),
