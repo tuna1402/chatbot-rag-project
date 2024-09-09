@@ -2,7 +2,7 @@ from http import client
 import pprint
 from pydantic import BaseModel
 from openai import OpenAI
-from repository.database import add_all, db_session, get_chat_rooms
+from repository.database import add_all, db_session, get_all_chat_rooms
 from utils.utils import create_kakao_response
 from models import dto
 
@@ -230,6 +230,6 @@ def ruser_update(User, Userinfo, AI, chatbot, chatroom, chatStatitics, db):
     ChatStatistics_update(chatStatitics, db)
 
 
-def get_chatrooms(db):
-    chat_rooms = get_chat_rooms(db)
+def get_all_chat_room(db):
+    chat_rooms = get_all_chat_rooms(db)
     return chat_rooms

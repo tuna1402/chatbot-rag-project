@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatroom List</title>
+    <title>Chatroom Detail</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -30,40 +30,54 @@
         li {
             padding: 10px;
             border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
         }
         li:last-child {
             border-bottom: none;
         }
-        a {
-            text-decoration: none;
-            color: #007BFF;
+        .user {
+            background-color: #e1f5fe;
+            border-left: 5px solid #1e88e5;
+            padding-left: 10px;
+        }
+        .ai {
+            background-color: #f1f8e9;
+            border-left: 5px solid #7cb342;
+            padding-left: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>채팅 리스트</h1>
-        <ul id="chatroom-list"></ul>
+        <h1>Chatroom Detail</h1>
+        <ul id="conversation-list"></ul>
     </div>
 
     <script>
-        async function fetchChatrooms() {
+        async function fetchChatroomDetail() {
+            const path = window.location.pathname;
+            const chatroomId = path.split('/').pop();
+            if (!chatroomId || chatroomId === 'chatroom') {
+                console.error('Chatroom ID is missing');
+                return;
+            }
             try {
-                const response = await fetch('/chatrooms');
+                const response = await fetch(`/chatroom/${chatroomId}`);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 const data = await response.json();
-                const chatroomList = document.getElementById('chatroom-list');
-                chatroomList.innerHTML = data.chatrooms.map((chatroom, index) => 
-                    `<li><a href="/chatroom/${index+1}">${chatroom}</a></li>`
-                ).join('');
+                const conversationList = document.getElementById('conversation-list');
+                conversationList.innerHTML = data.conversation.map(chat => {
+                    return `<li><strong>${chat.type === 'user' ? 'User' : 'AI'}:</strong> ${chat.text}</li>`;
+                }).join('');
             } catch (error) {
-                console.error('There has been a problem with your fetch operation:', error);
+                console.error('Error fetching conversation:', error);
             }
         }
-
-        window.onload = fetchChatrooms;
+    
+        window.onload = fetchChatroomDetail;
     </script>
+    
 </body>
 </html>

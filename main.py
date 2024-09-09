@@ -1,4 +1,5 @@
 import copy
+import json
 import os
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -7,8 +8,8 @@ from fastapi.responses import JSONResponse, HTMLResponse
 from openai import OpenAI
 import uvicorn
 
-from repository.database import db_session
-from service.service import get_gpt_response, ruser, ruser_update, get_chatrooms
+from repository.database import db_session, get_ai, get_chat_room, get_user
+from service.service import get_gpt_response, ruser, ruser_update, get_all_chat_room
 from utils.utils import create_kakao_response
 
 # from utils.utils import add_history, create_kakao_response
@@ -29,7 +30,7 @@ print("OpenAI API Key:", client.api_key)
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
-    with open('chatroom_list.html', 'r') as file:
+    with open(os.path.join(os.getcwd(), "chatroom_list.html"), 'r', encoding='utf-8') as file:
         html_content = file.read()
     return HTMLResponse(content=html_content)
 
@@ -127,8 +128,27 @@ def add_history(talk_history, role, message):
 
 @app.get("/chatrooms")
 async def chatrooms_list(db: Session = Depends(db_session)):
-    chatrooms = get_chatrooms(db)
+    chatrooms = get_all_chat_room(db)
     return {"chatrooms": [f"{chatroom.id}번째 채팅방" for chatroom in chatrooms]}
+
+@app.get("/chatroom/{chatroom_id}")
+async def chatroom_detail(chatroom_id: int, db: Session = Depends(db_session)):
+    chatroom = get_chat_room(chatroom_id, db)
+    user = get_user(chatroom.user_id, db)
+    ai = get_ai(chatroom.ai_id, db)
+
+    # JSON 파싱 (eval 대신)
+    user_log = json.loads(user.user_speech_log)
+    ai_log = json.loads(ai.ai_speech_log)
+
+    conversation = []
+    for i in range(max(len(user_log), len(ai_log))):
+        if i < len(user_log):
+            conversation.append({"type": "user", "text": user_log[i]})
+        if i < len(ai_log):
+            conversation.append({"type": "ai", "text": ai_log[i]})
+
+    return {"conversation": conversation}
 
 if __name__ == '__main__':
     # Uvicorn을 사용하여 FastAPI 애플리케이션을 실행합니다.

@@ -437,6 +437,15 @@ def time_and_token_search(chatroom_id: int, db: Session):
             "current_time": current_time,
             "total_tokens": total_tokens
         }
+
+def get_user(user_id, db):
+    return db.query(User).filter(User.id == user_id).first()
+
+def get_ai(ai_id, db):
+    return db.query(AI).filter(AI.id == ai_id).first()
+
+def get_chat_room(chatroom_id, db):
+    return db.query(ChatRoom).filter(ChatRoom.id == chatroom_id).first()
     
-def get_chat_rooms(db):
+def get_all_chat_rooms(db):
     return db.query(ChatRoom).all()
