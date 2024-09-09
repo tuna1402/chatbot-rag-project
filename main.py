@@ -4,7 +4,7 @@ from typing import List
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 from sqlalchemy.orm import Session
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from openai import OpenAI
 import uvicorn
 from models.dto import gpt_message 
@@ -16,7 +16,8 @@ from models.get_data import get_chat_statistics, get_chatbot, get_chatroom, get_
 from models.talk_history import ChatRoom
 from rag.main import create_rag_session
 from repository.database import db_session
-from service.service import get_gpt_response, ruser ,ruser_update
+
+
 from utils.utils import create_kakao_response
 
 # from utils.utils import add_history, create_kakao_response
@@ -39,6 +40,7 @@ PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
 UPSTAGE_API_KEY = os.getenv('UPSTAGE_API_KEY')
 LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY')
 print("OpenAI API Key:", client.api_key)
+
 
 
 
@@ -170,6 +172,7 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
 
         
 
+
         return JSONResponse(content=kakao_response)
     
     # try:
@@ -186,7 +189,12 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
 def add_history(talk_history, role, message):
     talk_history.append({"role": role, "content": message})
     return talk_history
-    
+
+@app.get("/chatrooms")
+async def chatrooms_list(db: Session = Depends(db_session)):
+    chatrooms = get_chatrooms(db)
+    return {"chatrooms": [f"{chatroom.id}번째 채팅방" for chatroom in chatrooms]}
+
 if __name__ == '__main__':
     # Uvicorn을 사용하여 FastAPI 애플리케이션을 실행합니다.
     uvicorn.run(app, host='0.0.0.0', port=5000)
