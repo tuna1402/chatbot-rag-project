@@ -274,7 +274,7 @@ def retriever_base():
                 model="solar-embedding-1-large-query"
             ),  # Dense Embedder
             top_k=5,  # Top-K 문서 반환 개수
-            alpha=0.5,  # alpha=0.75로 설정한 경우, (0.75: Dense Embedding, 0.25: Sparse Embedding)
+            alpha=0.25,  # alpha=0.75로 설정한 경우, (0.75: Dense Embedding, 0.25: Sparse Embedding)
         )
 
     # 검색기 생성

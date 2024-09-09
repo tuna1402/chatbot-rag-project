@@ -76,10 +76,10 @@ if __name__ == "__main__":
 
     user_session1 = RAGSession()
     user_session2 = RAGSession()
-    # response1 = user_session1.ask_question("What is the best color for a small living room?")
+    response1 = user_session1.ask_question("What is the best color for a small living room?")
     response2 = user_session2.ask_question("15평 바닥 공사 비용 얼마야?")
     response2 = user_session2.ask_question("요즘 유행하는 상가 인테리어 디자인 알려줘")
-    # print(response1)
+    print(response1)
     print(response2)
-    # print(user_session1.chat_history)
+    print(user_session1.chat_history)
     print(user_session2.chat_history)

@@ -50,6 +50,7 @@ class Upsert():
     
     def upsert_file(self, contents, metadatas, embedder_type: str, batch_size: int):
         embedder = self.load_embeddings(embedder_type)
+        self.sparse_encoder = self.sparse_data_load()
         upsert_doc(self.pc_index, self.rag_name, contents, metadatas, self.sparse_encoder, 
                embedder, batch_size)
         
