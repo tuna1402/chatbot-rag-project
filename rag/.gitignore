@@ -1,0 +1,9 @@
+/__pycache__/
+/.rag_1/
+/db/
+/docs/
+
+*.png
+
+test.py
+lang_ch_test.py
