@@ -1,3 +1,4 @@
+from typing import List
 from pydantic import BaseModel
 
 #데이터 형식 정의
@@ -37,6 +38,8 @@ class User_update_datatype(BaseModel):
 class UserInfo_add_datatype(BaseModel):
     user_id : int
     image : str
+
+
 
 class UserInfo_update_datatype(BaseModel):
     id : int
@@ -84,5 +87,17 @@ class ChatStatistics_add_datatype(BaseModel):
 class ChatStatistics_update_datatype(BaseModel):
     id : int
     chatroom_id : int
+
+class gpt_message (BaseModel):
+
+    role : str
+    content : str
+
+class talk_history (BaseModel): 
+
+    chatroom_id : str
+    ai_id : str 
+    user_id : int
+    gpt_message : List[gpt_message]
 
 
