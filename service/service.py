@@ -197,7 +197,7 @@ def ChatStatistics_add(ChatStatistics, db):
     }
     ChatStatistics = add_all(json_data, 'ChatStatistics', db)
 
-    return new_chatStatistics
+    return ChatStatistics
 
 def ChatStatistics_update(ChatStatistics, db):
     json_data = {
@@ -244,6 +244,3 @@ def ruser_update(User, AI,  db, room : ChatRoom):
     # ChatStatistics_update(chatStatitics, db)
 
 
-def get_all_chat_room(db):
-    chat_rooms = get_all_chat_rooms(db)
-    return chat_rooms
