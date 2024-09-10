@@ -1,5 +1,6 @@
 import copy
 import os
+import pprint
 from typing import List
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -8,7 +9,7 @@ from fastapi.responses import JSONResponse
 from openai import OpenAI
 import uvicorn
 from models.dto import gpt_message 
-
+import time
 
 
 from models.get_data import get_ai, get_user, update_ai, update_user
@@ -106,6 +107,7 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
         # OpenAI API에 요청을 보냅니다.
         # gpt_message = get_gpt_response(client, message)
         gpt_all = get_gpt_response(client, message)
+        print("gpt_all : ",gpt_all)
         
         # gpt_response = gpt_all.choices[0].message.content
         
@@ -135,7 +137,7 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
         # # chatroom_add 함수를 호출하여 채팅방 정보를 저장하거나 업데이트합니다.
 
         AI = get_ai(gpt_all)
-   
+        print(f'AI_item_check: {AI.items()}')
         
         user = get_user(new_user)
         
@@ -149,9 +151,9 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
             
             new_chatroom.add_message({"role":"assistant", "content": answer})
             
-            print("history : ", new_chatroom.get_chat_history())
+            # print("history : ", new_chatroom.get_chat_history())
             chat_history[user_id] = new_chatroom
-            print("history : ", chat_history[user_id])
+            # print("history : ", chat_history[user_id])
         else:      
             # 사용자 존재를 확인 후 업데이트를 진행한다.
             for history_user_id, chat_room in chat_history.items():
@@ -160,11 +162,12 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
                     room:ChatRoom = chat_history[user_id]
                     user = update_user(room.get_user_id(), new_user);
                     update_AI = update_ai(room.get_ai_id(), gpt_all)
-                    ruser_update(user, AI, db, room)
+                    ruser_update(user, update_AI, db, room)
+                    # time.sleep(5)
                     room.add_message({"role":"user", "content": message})
                     room.add_message({"role":"assistant", "content": answer})
-                    ruser_update(user, update_AI ,db, room)
-                    print("history : ", room.get_chat_history())
+                    # ruser_update(user, update_AI ,db, room)
+                    # print("history : ", room.get_chat_history())
 
     
 

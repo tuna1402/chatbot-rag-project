@@ -89,6 +89,7 @@ def chatroom_update(chatroom : dto.Chatbot_update_datatype, db):
 
 def ai_add(AI : dto.AI_add_datatype, db):
     # AI 봇 추가 또는 업데이트 테스트
+    print(f'AI_name_check:{AI['name']}')
     json_data = {
         'name': AI['name'],
         'initial_prompt': AI['initial_prompt'],

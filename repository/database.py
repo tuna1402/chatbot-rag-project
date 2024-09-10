@@ -79,7 +79,7 @@ def ai_add_or_update_data(json_data: dict, db: Session):
             "completion_tokens": json_data.get('completion_tokens', 0),
             "total_tokens": json_data.get('total_tokens', 0)
     }
-    ai_speech_log = json_data.get('ai_speech_log', '[]')
+    ai_speech_log = json_data.get('ai_speech_log')
     
     with SessionLocal() as db:
         ai = db.query(AI).filter(AI.id == ai_id).first()
