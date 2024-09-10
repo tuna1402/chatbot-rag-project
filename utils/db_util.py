@@ -40,6 +40,7 @@ def extract_budget(sentence):
                 num_as_kr = num2kr(int(numeric_part), mode=1)
                 combined_kr = num_as_kr + korean_part
 
+                print(num_as_kr)
 
                 # 한글을 숫자로 다시 변환합니다.
                 return kr2num(combined_kr)

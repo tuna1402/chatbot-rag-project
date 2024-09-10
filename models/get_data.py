@@ -76,6 +76,7 @@ def update_ai(AI_id,AI):
     message = AI.choices[0].message
     ai_speech_log = f'["{message.content}"]'
 
+
     
     new_ai = {
         'id' : AI_id,
@@ -91,8 +92,10 @@ def update_ai(AI_id,AI):
     # JSON 변환
     new_ai_json = json.dumps(new_ai)
 
-    
-    return new_ai
+
+
+    print("is_json", new_ai_json)
+
 
 def update_user(user_id, user):
     

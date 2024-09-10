@@ -139,7 +139,9 @@ def user_update(User : dto.User_update_datatype, db):
         'user_speech_log': User['user_speech_log']
     }
 
+
     User = add_all(json_data, 'User', db)
+    print(User)
     return User
 
 
@@ -195,7 +197,7 @@ def ChatStatistics_add(ChatStatistics, db):
     }
     ChatStatistics = add_all(json_data, 'ChatStatistics', db)
 
-    return ChatStatistics
+    return new_chatStatistics
 
 def ChatStatistics_update(ChatStatistics, db):
     json_data = {
@@ -242,4 +244,6 @@ def ruser_update(User, AI,  db, room : ChatRoom):
     # ChatStatistics_update(chatStatitics, db)
 
 
-
+def get_all_chat_room(db):
+    chat_rooms = get_all_chat_rooms(db)
+    return chat_rooms

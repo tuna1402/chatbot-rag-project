@@ -70,7 +70,6 @@ def add_all(json_data: dict, model_name: str, db: Session):
 def ai_add_or_update_data(json_data: dict, db: Session):
     db_session()
     # Json 데이터를 파싱합니다.
-
     ai_id = json_data.get('id')
     name = json_data.get('name')
     initial_prompt = json_data.get('initial_prompt')
@@ -99,7 +98,6 @@ def ai_add_or_update_data(json_data: dict, db: Session):
             new_log_list = json.loads(ai_speech_log)
             log_list.extend(new_log_list)
             ai.ai_speech_log = json.dumps(log_list, ensure_ascii=False)
-
         # ai(id)가 존재하지 않을 경우 새 ai를 추가합니다.
         else:
             ai = AI(
@@ -238,7 +236,6 @@ def userinfo_add_or_update_data(json_data: dict, db: Session):
     userinfo_id = json_data.get('id')
     user_id = json_data.get('user_id')
     image = json_data.get('image', '') 
-
     with SessionLocal() as db:
         # userinfo를 조회합니다.
         userinfo = db.query(UserInfo).filter(UserInfo.id == userinfo_id).first()
@@ -447,3 +444,15 @@ def time_and_token_search(chatroom_id: int, db: Session):
             "current_time": current_time,
             "total_tokens": total_tokens
         }
+
+def get_user(user_id, db):
+    return db.query(User).filter(User.id == user_id).first()
+
+def get_ai(ai_id, db):
+    return db.query(AI).filter(AI.id == ai_id).first()
+
+def get_chat_room(chatroom_id, db):
+    return db.query(ChatRoom).filter(ChatRoom.id == chatroom_id).first()
+    
+def get_all_chat_rooms(db):
+    return db.query(ChatRoom).all()
