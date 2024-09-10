@@ -1,8 +1,12 @@
 import json
+from fastapi import Depends
 from sqlalchemy import func
 from repository.base import SessionLocal, Base, engine
+from utils import db_util
 from datetime import datetime, timedelta
 from models.models import AI, User, Chatbot, ChatRoom, UserInfo, ChatStatistics
+from sqlalchemy.orm import Session
+
 
 # last_chat_log_time() 함수를 호출한 시간을 마지막 채팅 시간(last_chat_time)으로 저장합니다.
 # get_last_chat_log_time() 함수를 호출할 시 마지막 채팅 시간을 return합니다.
@@ -27,11 +31,15 @@ def db_session():
     transaction = connection.begin()
     session = SessionLocal(bind=connection)
     
-    yield session
-    
-    session.close()
-    transaction.rollback()
-    connection.close()
+    try:
+        yield session
+        transaction.commit()  # 성공적으로 수행된 경우 커밋
+    except Exception:
+        transaction.rollback()  # 예외 발생 시 롤백
+        raise  # 예외를 다시 발생시켜 호출자가 처리할 수 있게 함
+    finally:
+        session.close()  # 세션 종료
+        connection.close()  # 연결 종료
 
 def last_chat_log_time():
     global last_chat_time
@@ -43,25 +51,26 @@ def get_last_chat_log_time():
 
 # create&update
 
-def add_all(json_data: dict, model_name: str):
-
+def add_all(json_data: dict, model_name: str, db: Session):
+    
     # model_name에 따라 함수를 호출합니다.
     if model_name == 'AI':
-        return ai_add_or_update_data(json_data)
+        return ai_add_or_update_data(json_data, db)
     elif model_name == 'User':
-        return user_add_or_update_data(json_data)
+        return user_add_or_update_data(json_data, db)
     elif model_name == 'Chatbot':
-        return chatbot_add_or_update_data(json_data)
+        return chatbot_add_or_update_data(json_data, db)
     elif model_name == 'ChatRoom':
-        return chatroom_add_or_update(json_data)
+        return chatroom_add_or_update(json_data, db)
     elif model_name == 'UserInfo':
-        return userinfo_add_or_update_data(json_data)
+        return userinfo_add_or_update_data(json_data, db)
     elif model_name == 'ChatStatistics':
-        return chat_statistics_add_or_update_data(json_data)
+        return chat_statistics_add_or_update_data(json_data, db)
 
-def ai_add_or_update_data(json_data: dict):
-
+def ai_add_or_update_data(json_data: dict, db: Session):
+    db_session()
     # Json 데이터를 파싱합니다.
+
     ai_id = json_data.get('id')
     name = json_data.get('name')
     initial_prompt = json_data.get('initial_prompt')
@@ -77,7 +86,7 @@ def ai_add_or_update_data(json_data: dict):
         ai = db.query(AI).filter(AI.id == ai_id).first()
 
         # 기존 ai 데이터를 업데이트합니다.
-        if ai:
+        if ai_id:
             ai.name = name
             ai.initial_prompt = initial_prompt
             ai.max_tokens = max_tokens
@@ -90,7 +99,7 @@ def ai_add_or_update_data(json_data: dict):
             new_log_list = json.loads(ai_speech_log)
             log_list.extend(new_log_list)
             ai.ai_speech_log = json.dumps(log_list, ensure_ascii=False)
-        
+
         # ai(id)가 존재하지 않을 경우 새 ai를 추가합니다.
         else:
             ai = AI(
@@ -108,7 +117,7 @@ def ai_add_or_update_data(json_data: dict):
 
         return ai
 
-def user_add_or_update_data(json_data: dict):
+def user_add_or_update_data(json_data: dict, db: Session):
 
     user_id = json_data.get('id')
     contact_info = json_data.get('contact_info')
@@ -143,7 +152,7 @@ def user_add_or_update_data(json_data: dict):
 
         return user
 
-def chatbot_add_or_update_data(json_data: dict):
+def chatbot_add_or_update_data(json_data: dict, db: Session):
     chatbot_id = json_data.get('id')
     name = json_data.get('name')
     ai_id = json_data.get('ai_id')
@@ -159,7 +168,6 @@ def chatbot_add_or_update_data(json_data: dict):
 
             # 챗봇이(id) 존재하지 않을 경우 새 챗봇을 추가합니다.
             chatbot = Chatbot(
-                id=chatbot_id,
                 name=name,
                 ai_id=ai_id
             )
@@ -172,7 +180,7 @@ def chatbot_add_or_update_data(json_data: dict):
 
         return chatbot
     
-def chatroom_add_or_update(json_data: dict):
+def chatroom_add_or_update(json_data: dict, db: Session):
     chatroom_id = json_data.get('id')
     user_id = json_data.get('user_id')
     ai_id = json_data.get('ai_id')
@@ -225,44 +233,85 @@ def chatroom_add_or_update(json_data: dict):
 
             return chatroom
 
-def userinfo_add_or_update_data(json_data: dict):
+def userinfo_add_or_update_data(json_data: dict, db: Session):
 
     userinfo_id = json_data.get('id')
     user_id = json_data.get('user_id')
-    image = json_data.get('image')
-    trend_design = json_data.get('trend_design', '[]')
-    budget = json_data.get('budget')
-    age = json_data.get('age')
-    region = json_data.get('region')
+    image = json_data.get('image', '') 
 
     with SessionLocal() as db:
-
+        # userinfo를 조회합니다.
         userinfo = db.query(UserInfo).filter(UserInfo.id == userinfo_id).first()
+        
 
-        # 기존 userinfo 데이터를 업데이트합니다.
+        # user_speech_log에서 가장 최근의 로그 항목을 조회합니다.
+        user = db.query(User).filter(User.id == user_id).first()
+
+
+        if user and user.user_speech_log:
+
+            user_speech_log = json.loads(user.user_speech_log)
+
+            last_log_text = user_speech_log[-1] if user_speech_log else ""
+
+            # util.py의 함수를 통해 스타일, 예산, 나이, 지역 정보를 추출합니다.
+            extracted_style = db_util.extract_style(last_log_text)
+
+            extracted_budget = db_util.extract_budget(last_log_text)
+
+            extracted_age = db_util.extract_age(last_log_text)
+            extracted_region = db_util.extract_city(last_log_text)
+        else:
+            extracted_style = "None"
+            extracted_budget = "None"
+            extracted_age = "None"
+            extracted_region = "None"
+
+        # userinfo 데이터를 업데이트 또는 추가합니다.
         if userinfo:
+            print('유저인포5')
             userinfo.user_id = user_id
-            userinfo.image = image
-            userinfo.budget = budget
-            userinfo.age = age
-            userinfo.region = region
+
+            # image 업데이트: 빈 문자열이면 None으로 처리합니다.
+            if image == "":
+                userinfo.image = None
+            else:
+                userinfo.image = image
+
+            # trend_design 업데이트: 기존 데이터에 새로 추출한 스타일을 추가합니다.
+            if extracted_style != "None":
+                existing_trend_list = json.loads(userinfo.trend_design) if userinfo.trend_design else []
+                
+                # extracted_style이 문자열인 경우 리스트로 변환
+                if isinstance(extracted_style, str):
+                    extracted_style = [extracted_style]
+                
+                # 중복 제거
+                new_trend_list = list(set(existing_trend_list + extracted_style))  # 중복 제거
+                userinfo.trend_design = json.dumps(new_trend_list, ensure_ascii=False)
             
-            # trend_design 업데이트합니다. (기존 디자인에 새 디자인 추가)
-            trend_list = json.loads(userinfo.trend_design)
-            new_trend_list = json.loads(trend_design)
-            trend_list.extend(new_trend_list)
-            userinfo.trend_design = json.dumps(trend_list, ensure_ascii=False)
+            # 예산을 업데이트합니다.
+            if extracted_budget != "None":
+                userinfo.budget = extracted_budget
+            
+            # 나이를 업데이트합니다.
+            if extracted_age != "None":
+                userinfo.age = extracted_age
+            
+            # 지역을 업데이트합니다.
+            if extracted_region != "None":
+                userinfo.region = extracted_region
 
         # 유저 정보가(id) 존재하지 않을 경우 새 유저 정보를 추가합니다. 
         else:
+            print('유저인포6')
             userinfo = UserInfo(
-                id=userinfo_id,
                 user_id=user_id,
-                image=image,
-                trend_design=json.dumps(json.loads(trend_design), ensure_ascii=False),
-                budget=budget,
-                age=age,
-                region=region
+                image=None if image == "" else image,
+                trend_design=json.dumps([extracted_style] if extracted_style != "None" else [], ensure_ascii=False),
+                budget=extracted_budget if extracted_budget != "None" else None,
+                age=extracted_age if extracted_age != "None" else None,
+                region=extracted_region if extracted_region != "None" else None
             )
             db.add(userinfo)
 
@@ -271,7 +320,8 @@ def userinfo_add_or_update_data(json_data: dict):
 
         return userinfo
 
-def chat_statistics_add_or_update_data(json_data: dict):
+
+def chat_statistics_add_or_update_data(json_data: dict, db: Session):
     
     statistics_id = json_data.get('id')
     chatroom_id = json_data.get('chatroom_id')
@@ -335,7 +385,7 @@ def chat_statistics_add_or_update_data(json_data: dict):
 
         return statistics
 
-def update_end_time(json_data: dict):
+def update_end_time(json_data: dict, db: Session):
     chatroom_id = json_data.get('id')
     end_time_str = json_data.get('end_time')
     end_time = datetime.fromisoformat(end_time_str) if end_time_str else None
@@ -369,7 +419,7 @@ def update_end_time(json_data: dict):
 
 # read
 
-def time_and_token_search(chatroom_id: int):
+def time_and_token_search(chatroom_id: int, db: Session):
     with SessionLocal() as session:
 
         # 현재 시간을 담을 변수입니다.

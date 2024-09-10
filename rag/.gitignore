@@ -1,3 +1,4 @@
+
 .env
 .venv
 
@@ -13,4 +14,3 @@
 test.py
 lang_ch_test.py
 docs/
-docs/**.* 
