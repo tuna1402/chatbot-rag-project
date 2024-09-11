@@ -2,10 +2,10 @@ from http import client
 import pprint
 from pydantic import BaseModel
 from openai import OpenAI
+from repository.database import add_all, db_session, get_all_chat_rooms
+from utils.utils import create_kakao_response
 from models.get_data import get_chat_statistics, get_chatbot, get_chatroom, get_userinfo, update_chatbot, update_chatroom
 from models.talk_history import ChatRoom
-from repository.database import add_all, db_session
-from utils.utils import create_kakao_response
 from models import dto
 
 
@@ -13,6 +13,7 @@ from models import dto
 talk_history = []
 
 def get_gpt_response(client: OpenAI, message):
+    print(f"get_gpt_responese", message)
     response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": message}
@@ -56,8 +57,8 @@ def chatroom_add(chatroom : dto.Chatroom_add_datatype, db):
         # }
     } 
     
-    chatroom = add_all(json_data, 'ChatRoom', db)
-    return chatroom
+    new_chatroom = add_all(json_data, 'ChatRoom', db)
+    return new_chatroom
 
 def chatroom_update(chatroom : dto.Chatbot_update_datatype, db):
     
@@ -80,8 +81,8 @@ def chatroom_update(chatroom : dto.Chatbot_update_datatype, db):
         # }
     } 
     
-    chatroom = add_all(json_data, 'Chatroom', db)
-    return chatroom
+    new_chatroom = add_all(json_data, 'Chatroom', db)
+    return new_chatroom
 
 
 #지훈님
@@ -89,7 +90,6 @@ def chatroom_update(chatroom : dto.Chatbot_update_datatype, db):
 
 def ai_add(AI : dto.AI_add_datatype, db):
     # AI 봇 추가 또는 업데이트 테스트
-    print(f'AI_name_check:{AI['name']}')
     json_data = {
         'name': AI['name'],
         'initial_prompt': AI['initial_prompt'],
@@ -100,8 +100,11 @@ def ai_add(AI : dto.AI_add_datatype, db):
         'ai_speech_log': AI['ai_speech_log']
     }
 
+
     ai = add_all(json_data, 'AI', db)
+    print(f"데이터테스트{ai.name}")
     return ai
+
 
 def ai_update(AI : dto.AI_update_datatype, db):
     # AI 봇 추가 또는 업데이트 테스트
@@ -117,24 +120,14 @@ def ai_update(AI : dto.AI_update_datatype, db):
     }
 
 
-    AI = add_all(json_data, 'AI', db)
-    return AI
+    new_AI = add_all(json_data, 'AI', db)
+    return new_AI
 
     ## 사용자 정보 추가하기 & 사용자 정보 업데이트하기 - 유저테이블
 def user_add(User : dto.User_add_datatype, db):
 
+    print(f"user_add: ", User)
     json_data = {
-        'contact_info': User['contact_info'],
-        'friend_status': User['friend_status'],
-        'user_speech_log': User['user_speech_log']
-    }
-
-    User = add_all(json_data, 'User', db)
-    return User
-
-def user_update(User : dto.User_update_datatype, db):
-    json_data = {
-        'id': User['id'],
         'contact_info': User['contact_info'],
         'friend_status': User['friend_status'],
         'user_speech_log': User['user_speech_log']
@@ -146,12 +139,30 @@ def user_update(User : dto.User_update_datatype, db):
     return User
 
 
+def user_update(User : dto.User_update_datatype, db):
+    json_data = {
+        'id': User['id'],
+        'contact_info': User['contact_info'],
+        'friend_status': User['friend_status'],
+        'user_speech_log': User['user_speech_log']
+    }
+
+    new_user = add_all(json_data, 'User', db)
+    return new_user
+
+
+
 def userinfo_add(userinfo : dto.UserInfo_add_datatype, db):
+    print("유저인포호출")
+
     json_data = {
         'user_id': userinfo["user_id"],
         'image': userinfo["image"]
     }
+
+    print("제이슨", json_data)
     userinfo2 = add_all(json_data, 'UserInfo', db)
+    print("테스트333", userinfo2) 
     return userinfo2
 
 def userinfo_update(userinfo : dto.UserInfo_update_datatype, db):
@@ -161,8 +172,8 @@ def userinfo_update(userinfo : dto.UserInfo_update_datatype, db):
         'user_id': userinfo["user_id"],
         # 'image': userinfo["image"]
     }
-    userinfo = add_all(json_data, 'UserInfo', db)
-    return userinfo
+    new_userinfo = add_all(json_data, 'UserInfo', db)
+    return new_userinfo
 
 ## GPT 정보 추가하기 & GPT 정보 업데이트하기 -> 챗봇테이블
 def chatbot_add(chatbot : dto.Chatbot_add_datatype, db):
@@ -171,6 +182,7 @@ def chatbot_add(chatbot : dto.Chatbot_add_datatype, db):
         'name': chatbot["name"],
         'ai_id': chatbot["ai_id"]
     }
+
     chatbot = add_all(json_data, 'Chatbot', db)
     return chatbot
 
@@ -181,9 +193,9 @@ def chatbot_update(chatbot : dto.Chatbot_update_datatype, db):
         # 'name': chatbot["name"],
         'ai_id': chatbot["ai_id"]
     }
-    chatbot = add_all(json_data, 'Chatbot', db)
+    new_chatbot = add_all(json_data, 'Chatbot', db)
 
-    return chatbot
+    return new_chatbot
 
 
 #나
@@ -196,18 +208,18 @@ def ChatStatistics_add(ChatStatistics, db):
     json_data = {
         'chatroom_id' : ChatStatistics["chatroom_id"]
     }
-    ChatStatistics = add_all(json_data, 'ChatStatistics', db)
+    new_chatStatistics = add_all(json_data, 'ChatStatistics', db)
 
-    return ChatStatistics
+    return new_chatStatistics
 
 def ChatStatistics_update(ChatStatistics, db):
     json_data = {
         "id" : ChatStatistics["id"],
         'chatroom_id' : ChatStatistics["chatroom_id"]
     }
-    ChatStatistics = add_all(json_data, 'ChatStatistics', db)
+    new_chatStatistics = add_all(json_data, 'ChatStatistics', db)
 
-    return ChatStatistics
+    return new_chatStatistics
 
 def ruser(User, AI, chatbot_name, db):
         
@@ -245,3 +257,6 @@ def ruser_update(User, AI,  db, room : ChatRoom):
     # ChatStatistics_update(chatStatitics, db)
 
 
+def get_all_chat_room(db):
+    chat_rooms = get_all_chat_rooms(db)
+    return chat_rooms

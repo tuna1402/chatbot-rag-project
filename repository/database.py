@@ -445,10 +445,10 @@ def time_and_token_search(chatroom_id: int, db: Session):
             "total_tokens": total_tokens
         }
 
-def get_user(user_id, db):
+def get_user_info(user_id, db):
     return db.query(User).filter(User.id == user_id).first()
 
-def get_ai(ai_id, db):
+def get_ai_info(ai_id, db):
     return db.query(AI).filter(AI.id == ai_id).first()
 
 def get_chat_room(chatroom_id, db):
