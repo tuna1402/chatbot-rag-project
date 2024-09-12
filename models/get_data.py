@@ -8,7 +8,6 @@ def get_ai(AI, answer):
     usage = AI.usage
     message = AI.choices[0].message
     ai_speech_log = f'["{answer}"]'
-    print("get_ai!!!!!!!!!!!!!!!!!!!!!", ai_speech_log)
     
     new_ai = {
         'name': AI.id,
@@ -27,13 +26,11 @@ def get_ai(AI, answer):
     return new_ai
 
 def get_user(user):
-    print("user!!!!!!!!!!!!!!!!", user)
     new_user =  {
         'contact_info': None,
         'friend_status': user['friend_status'],
         'user_speech_log': f'["{user['user_speech_log']}"]'
         }
-    print("new_user!!!!!!!!!!!!!!!", new_user)
     return new_user
 
 def get_chatbot(chatbot_name, ai_id):
