@@ -3,13 +3,16 @@ import os
 import pprint
 from typing import List
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 from fastapi.responses import JSONResponse
 from openai import OpenAI
 import uvicorn
 from models.dto import gpt_message 
 import time
+import httpx
+
+
 
 
 from models.get_data import get_ai, get_user, update_ai, update_user
@@ -43,16 +46,85 @@ PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
 UPSTAGE_API_KEY = os.getenv('UPSTAGE_API_KEY')
 LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY')
 
+async def write_notification(callback_url: str, content="", client="", message="", new_user="", chatbot_name="", user_id="", db=""):
+    
+    # OpenAI API에 요청을 보냅니다.
+    # gpt_message = get_gpt_response(client, message)
+    gpt_all = get_gpt_response(client, message)
+    print("gpt_all : ",gpt_all)
+    
+    # gpt_response = gpt_all.choices[0].message.content
+    
+    rag = RAGSession()
+    answer = rag.ask_question(message)
+    
+    print("RAG ANSWER : ", answer)
+    #send_to_rag 를 위한 gpt_msg
+    # gpt_msg = gpt_message(role='assistant', content=gpt_response)
+        #send_to_rag 를 위한 gpt_msg
+        
+    gpt_msg: gpt_message = { "role":"user", "content":message }
+    
+    send_to_rag.append(gpt_msg)
+    
+    
+    # 최종적으로 클라이언트에게 응답을 반환합니다.
+    
+    # 대화 내역에 OpenAI의 응답을 추가합니다.
+    add_history(talk_history,"assistant", answer)
+    kakao_response = create_kakao_response(answer)
 
 
+
+
+    # 추가
+    # # chatroom_add 함수를 호출하여 채팅방 정보를 저장하거나 업데이트합니다.
+
+    AI = get_ai(gpt_all)
+    print(f'AI_item_check: {AI.items()}')
+    
+    user = get_user(new_user)
+    
+    new_chatbot = chatbot_name
+    
+    if user_id not in chat_history:
+        # 기존 데이터를 생성합니다.
+        new_chatroom = ruser(user, AI, new_chatbot, db)
+        # 각 채팅방에 메시지를 추가 (생성 직후)
+        new_chatroom.add_message({"role":"user", "content": message})
+        
+        new_chatroom.add_message({"role":"assistant", "content": answer})
+        
+        # print("history : ", new_chatroom.get_chat_history())
+        chat_history[user_id] = new_chatroom
+        # print("history : ", chat_history[user_id])
+    else:      
+        # 사용자 존재를 확인 후 업데이트를 진행한다.
+        for history_user_id, chat_room in chat_history.items():
+
+            if(history_user_id == user_id):
+                room:ChatRoom = chat_history[user_id]
+                user = update_user(room.get_user_id(), new_user);
+                update_AI = update_ai(room.get_ai_id(), gpt_all)
+                ruser_update(user, update_AI, db, room)
+                # time.sleep(5)
+                room.add_message({"role":"user", "content": message})
+                room.add_message({"role":"assistant", "content": answer})
+                # ruser_update(user, update_AI ,db, room)
+                # print("history : ", room.get_chat_history())
+    async with httpx.AsyncClient() as client:
+        response = await client.post(callback_url, data=content)
+        print(response.status_code)
+        print(response.text)
+        
 
 @app.post("/chat")
-async def chat(chat_request: Request, db: Session = Depends(db_session)):
+async def chat(chat_request: Request, db: Session = Depends(db_session), background_tasks: BackgroundTasks = BackgroundTasks ):
     
     # 요청으로부터 JSON 데이터를 비동기적으로 가져옵니다.
         user_response = await chat_request.json()
         message = user_response.get('userRequest', {}).get('utterance')
-
+        callback_url =  user_response.get('userRequest', {}).get('callbackUrl')
         # 카카오톡 응답에서 필요한 값 추출
         chatroom_id = user_response.get('userRequest', {}).get('block', {}).get('id')
         chatroom_id2 = user_response.get('userRequest', {}).get('block', {}).get('id')
@@ -104,76 +176,20 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
         # 대화 내역에 사용자의 메시지를 추가합니다.
         add_history(talk_history,"user",message)
         
-        # OpenAI API에 요청을 보냅니다.
-        # gpt_message = get_gpt_response(client, message)
-        gpt_all = get_gpt_response(client, message)
-        print("gpt_all : ",gpt_all)
-        
-        # gpt_response = gpt_all.choices[0].message.content
-        
-        rag = RAGSession()
-        answer = rag.ask_question(message)
-        
-        print("RAG ANSWER : ", answer)
-        #send_to_rag 를 위한 gpt_msg
-        # gpt_msg = gpt_message(role='assistant', content=gpt_response)
-         #send_to_rag 를 위한 gpt_msg
-         
-        gpt_msg: gpt_message = { "role":"user", "content":message }
-        
-        send_to_rag.append(gpt_msg)
-        
-        
-        # 최종적으로 클라이언트에게 응답을 반환합니다.
-        
-        # 대화 내역에 OpenAI의 응답을 추가합니다.
-        add_history(talk_history,"assistant", answer)
-        kakao_response = create_kakao_response(answer)
-    
-
-
-
-        # 추가
-        # # chatroom_add 함수를 호출하여 채팅방 정보를 저장하거나 업데이트합니다.
-
-        AI = get_ai(gpt_all)
-        print(f'AI_item_check: {AI.items()}')
-        
-        user = get_user(new_user)
-        
-        new_chatbot = chatbot_name
-        
-        if user_id not in chat_history:
-            # 기존 데이터를 생성합니다.
-            new_chatroom = ruser(user, AI, new_chatbot, db)
-            # 각 채팅방에 메시지를 추가 (생성 직후)
-            new_chatroom.add_message({"role":"user", "content": message})
-            
-            new_chatroom.add_message({"role":"assistant", "content": answer})
-            
-            # print("history : ", new_chatroom.get_chat_history())
-            chat_history[user_id] = new_chatroom
-            # print("history : ", chat_history[user_id])
-        else:      
-            # 사용자 존재를 확인 후 업데이트를 진행한다.
-            for history_user_id, chat_room in chat_history.items():
-
-                if(history_user_id == user_id):
-                    room:ChatRoom = chat_history[user_id]
-                    user = update_user(room.get_user_id(), new_user);
-                    update_AI = update_ai(room.get_ai_id(), gpt_all)
-                    ruser_update(user, update_AI, db, room)
-                    # time.sleep(5)
-                    room.add_message({"role":"user", "content": message})
-                    room.add_message({"role":"assistant", "content": answer})
-                    # ruser_update(user, update_AI ,db, room)
-                    # print("history : ", room.get_chat_history())
 
     
-
+        kakao_callback = {
+                        "version" : "2.0",
+                        "useCallback" : 'true',
+                        "data": {
+                            "text" : "생각하고 있는 중이에요😘 \n15초 정도 소요될 거 같아요 기다려 주실래요?!"
+                        }
+    }
+            
+        background_tasks.add_task(write_notification, callback_url=callback_url, content="",  client=client, message=message, new_user=new_user, chatbot_name=chatbot_name, user_id=user_id, db=db)
         
-
-        return JSONResponse(content=kakao_response)
+        
+        return JSONResponse(content=kakao_callback)
     
     # try:
         
