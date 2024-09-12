@@ -57,6 +57,12 @@ async def read_index2():
         html_content = file.read()
     return HTMLResponse(content=html_content)
 
+@app.get("/chatroom/{chatroom_id}", response_class=HTMLResponse)
+async def read_index2():
+    with open('chatroom_detail.html', 'r', encoding='UTF8') as file:
+        html_content = file.read()
+    return HTMLResponse(content=html_content)
+
 @app.post("/chat")
 async def chat(chat_request: Request, db: Session = Depends(db_session)):
     
@@ -140,14 +146,13 @@ async def chat(chat_request: Request, db: Session = Depends(db_session)):
         # 대화 내역에 OpenAI의 응답을 추가합니다.
         add_history(talk_history,"assistant", answer)
         kakao_response = create_kakao_response(answer)
-    
 
 
 
         # 추가
         # # chatroom_add 함수를 호출하여 채팅방 정보를 저장하거나 업데이트합니다.
 
-        AI = get_ai(gpt_all)
+        AI = get_ai(gpt_all, answer)
         print(f'AI_item_check: {AI.items()}')
         
         user = get_user(new_user)
@@ -207,7 +212,7 @@ async def chatrooms_list(db: Session = Depends(db_session)):
     chatrooms = get_all_chat_room(db)
     return {"chatrooms": [f"{chatroom.id}번째 채팅방" for chatroom in chatrooms]}
 
-@app.get("/chatroom/{chatroom_id}")
+@app.get("/chatroom_detail/{chatroom_id}")
 async def chatroom_detail(chatroom_id: int, db: Session = Depends(db_session)):
     chatroom = get_chat_room(chatroom_id, db)
     user = get_user_info(chatroom.user_id, db)

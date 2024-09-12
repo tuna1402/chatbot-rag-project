@@ -18,7 +18,7 @@ def get_gpt_response(client: OpenAI, message):
             model="gpt-4",
             messages=[{"role": "user", "content": message}
                       ],
-            max_tokens = 150,
+            max_tokens = 300,
             temperature = 0.7
             
         )

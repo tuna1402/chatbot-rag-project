@@ -49,7 +49,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Chatroom Detail</h1>
+        <h1>채팅 내역</h1>
         <ul id="conversation-list"></ul>
     </div>
 
@@ -62,7 +62,7 @@
                 return;
             }
             try {
-                const response = await fetch(`/chatroom/${chatroomId}`);
+                const response = await fetch(`/chatroom_detail/${chatroomId}`);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }

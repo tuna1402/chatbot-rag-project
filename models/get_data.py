@@ -3,12 +3,12 @@ import pprint
 
 
 
-def get_ai(AI):
+def get_ai(AI, answer):
     # 객체에서 필요한 데이터만 추출
     usage = AI.usage
     message = AI.choices[0].message
-    ai_speech_log = f'["{message.content}"]'
-
+    ai_speech_log = f'["{answer}"]'
+    print("get_ai!!!!!!!!!!!!!!!!!!!!!", ai_speech_log)
     
     new_ai = {
         'name': AI.id,
@@ -19,7 +19,7 @@ def get_ai(AI):
         'total_tokens': usage.total_tokens,
         'ai_speech_log': ai_speech_log
     }
-    
+
     # JSON 변환
     new_ai_json = json.dumps(new_ai)
 
@@ -27,13 +27,13 @@ def get_ai(AI):
     return new_ai
 
 def get_user(user):
-    
+    print("user!!!!!!!!!!!!!!!!", user)
     new_user =  {
         'contact_info': None,
         'friend_status': user['friend_status'],
         'user_speech_log': f'["{user['user_speech_log']}"]'
         }
-    
+    print("new_user!!!!!!!!!!!!!!!", new_user)
     return new_user
 
 def get_chatbot(chatbot_name, ai_id):
