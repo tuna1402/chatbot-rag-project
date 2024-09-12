@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 # SessionLocal = 세션 생성
 # Base = 기본 클래스 생성
 
-DATABASE_URL = "postgresql://postgres:0000@localhost/chatbot"
+DATABASE_URL = "postgresql://postgres:eagle5@localhost/chatbot"
 engine = create_engine(DATABASE_URL, echo=True)  # echo=True로 SQL 로그 활성화
 SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 Base = declarative_base()
