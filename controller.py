@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 from sqlalchemy.orm import Session
 from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
 from openai import OpenAI
 import uvicorn
 from models.dto import gpt_message 
@@ -44,6 +45,8 @@ PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
 UPSTAGE_API_KEY = os.getenv('UPSTAGE_API_KEY')
 LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY')
 
+# 재사용 할 수 있는 객체를 만듭니다.
+templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
@@ -51,17 +54,11 @@ async def read_index():
         html_content = file.read()
     return HTMLResponse(content=html_content)
 
-@app.get("/list", response_class=HTMLResponse)
-async def read_index2():
-    with open('chatroom_list.html', 'r', encoding='UTF8') as file:
-        html_content = file.read()
-    return HTMLResponse(content=html_content)
-
-@app.get("/chatroom/{chatroom_id}", response_class=HTMLResponse)
-async def read_index2():
-    with open('chatroom_detail.html', 'r', encoding='UTF8') as file:
-        html_content = file.read()
-    return HTMLResponse(content=html_content)
+# @app.get("/chatroom/{chatroom_id}", response_class=HTMLResponse)
+# async def read_index2():
+#     with open('chatroom_detail.html', 'r', encoding='UTF8') as file:
+#         html_content = file.read()
+#     return HTMLResponse(content=html_content)
 
 @app.post("/chat")
 async def chat(chat_request: Request, db: Session = Depends(db_session)):
@@ -208,17 +205,18 @@ def add_history(talk_history, role, message):
 
 
 @app.get("/chatrooms")
-async def chatrooms_list(db: Session = Depends(db_session)):
+async def chatrooms_list(request: Request, db: Session = Depends(db_session)):
     chatrooms = get_all_chat_room(db)
-    return {"chatrooms": [f"{chatroom.id}번째 채팅방" for chatroom in chatrooms]}
+    chatroom_names = [f"{chatroom.id}번째 채팅방" for chatroom in chatrooms]
+    
+    return templates.TemplateResponse("chatroom_list.html", {"request": request, "chatrooms": chatroom_names})
 
-@app.get("/chatroom_detail/{chatroom_id}")
-async def chatroom_detail(chatroom_id: int, db: Session = Depends(db_session)):
+@app.get("/chatroom/{chatroom_id}", response_class=HTMLResponse)
+async def chatroom_detail(chatroom_id: int, request: Request, db: Session = Depends(db_session)):
     chatroom = get_chat_room(chatroom_id, db)
     user = get_user_info(chatroom.user_id, db)
     ai = get_ai_info(chatroom.ai_id, db)
 
-    # JSON 파싱 (eval 대신)
     user_log = json.loads(user.user_speech_log)
     ai_log = json.loads(ai.ai_speech_log)
 
@@ -229,7 +227,7 @@ async def chatroom_detail(chatroom_id: int, db: Session = Depends(db_session)):
         if i < len(ai_log):
             conversation.append({"type": "ai", "text": ai_log[i]})
 
-    return {"conversation": conversation}
+    return templates.TemplateResponse("chatroom_detail.html", {"request": request, "conversation": conversation})
     
 if __name__ == '__main__':
     # Uvicorn을 사용하여 FastAPI 애플리케이션을 실행합니다.

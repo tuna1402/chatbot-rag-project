@@ -28,22 +28,10 @@
             padding: 0;
         }
         li {
+            list-style-type: none;
             padding: 10px;
             border-bottom: 1px solid #ddd;
             margin-bottom: 10px;
-        }
-        li:last-child {
-            border-bottom: none;
-        }
-        .user {
-            background-color: #e1f5fe;
-            border-left: 5px solid #1e88e5;
-            padding-left: 10px;
-        }
-        .ai {
-            background-color: #f1f8e9;
-            border-left: 5px solid #7cb342;
-            padding-left: 10px;
         }
     </style>
 </head>
@@ -51,9 +39,13 @@
     <div class="container">
         <h1>채팅 내역</h1>
         <ul id="conversation-list"></ul>
+            {% for chat in conversation %}
+                <li><strong>{{ 'User' if chat.type == 'user' else 'AI' }}:</strong> {{ chat.text }}</li>
+            {% endfor %}
+        </ul>
     </div>
 
-    <script>
+    <!-- <script>
         async function fetchChatroomDetail() {
             const path = window.location.pathname;
             const chatroomId = path.split('/').pop();
@@ -77,7 +69,7 @@
         }
     
         window.onload = fetchChatroomDetail;
-    </script>
+    </script> -->
     
 </body>
 </html>
