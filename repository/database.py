@@ -80,7 +80,8 @@ def ai_add_or_update_data(json_data: dict, db: Session):
             "total_tokens": json_data.get('total_tokens', 0)
     }
     ai_speech_log = json_data.get('ai_speech_log')
-    
+    ai_speech_log = ai_speech_log.replace("\n", "\\n")
+
     with SessionLocal() as db:
         ai = db.query(AI).filter(AI.id == ai_id).first()
 
@@ -100,6 +101,7 @@ def ai_add_or_update_data(json_data: dict, db: Session):
             ai.ai_speech_log = json.dumps(log_list, ensure_ascii=False)
         # ai(id)가 존재하지 않을 경우 새 ai를 추가합니다.
         else:
+            print("speech log!! : ",ai_speech_log)
             ai = AI(
                 id=ai_id,
                 name=name,

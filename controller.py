@@ -33,7 +33,7 @@ from rag.all_def import pdf_reader_and_split, divide_metacon, corpus_gen, token_
 load_dotenv()
 
 # OpenAI 클라이언트 인스턴스를 생성합니다.
-client = OpenAI()
+openai_client = OpenAI()
 app = FastAPI()
 
 chat_history = {}
@@ -41,16 +41,123 @@ talk_history = []
 send_to_rag = []
 
 # OpenAI 클라이언트 API 키를 설정합니다.
-client.api_key = os.getenv('OPENAI_API_KEY')
+openai_client.api_key = os.getenv('OPENAI_API_KEY')
 PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
 UPSTAGE_API_KEY = os.getenv('UPSTAGE_API_KEY')
 LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY')
 
-async def write_notification(callback_url: str, content="", client="", message="", new_user="", chatbot_name="", user_id="", db=""):
+async def call_chat(content):
+    callback_url = "http://127.0.0.1:8000/chat"
+    async with httpx.AsyncClient() as client:
+        response = await client.post(callback_url, data=content)
+        print(response.status_code)
+        print(response.text)
     
+
+async def write_notification(callback_url: str, content="", client="", message="", new_user="", chatbot_name="", user_id="", db=""):
+    pass
+    
+        
+        
+        
+        
+@app.post("/skill")
+async def fast_response(chat_request : Request, content="", background_tasks: BackgroundTasks = BackgroundTasks):
+    
+            # user_response = await chat_request.json()
+            
+    kakao_callback = {
+            "version" : "2.0",
+            "useCallback" : 'true',
+            "data": {
+                "text" : "생각하고 있는 중이에요😘 \n15초 정도 소요될 거 같아요 기다려 주실래요?!"
+            }
+    }
+                
+    # await call_chat(chat_request)
+    callback_url = "http://127.0.0.1:8000/chat"
+    async with httpx.AsyncClient() as client:
+        response = await client.post(callback_url, data=content)
+        print(response.status_code)
+        print(response.text)
+
+    return JSONResponse(content=kakao_callback)
+
+
+
+@app.post("/chat")
+async def chat(chat_request: Request, db: Session = Depends(db_session), background_tasks: BackgroundTasks = BackgroundTasks ):
+    
+# 요청으로부터 JSON 데이터를 비동기적으로 가져옵니다.
+    user_response = await chat_request.json()
+    print(user_response,'유저리퀘스트')
+    message = user_response.get('userRequest', {}).get('utterance')
+    callback_url =  user_response.get('userRequest', {}).get('callbackUrl')
+    # 카카오톡 응답에서 필요한 값 추출
+    chatroom_id = user_response.get('userRequest', {}).get('block', {}).get('id')
+    chatroom_id2 = user_response.get('userRequest', {}).get('block', {}).get('id')
+
+    ai_id = user_response.get('bot', {}).get('id')
+
+    user_id = user_response.get('userRequest', {}).get('user', {}).get('id')
+
+    is_friend = user_response.get('userRequest', {}).get('user', {}).get('properties', {}).get('isFriend')
+    user_message = user_response.get('userRequest', {}).get('utterance', {})
+    
+    chatbot_name = user_response.get('bot', {}).get('id')
+    
+    def to_get_user(is_friend,user_message):
+        user =  {
+            'friend_status': is_friend,
+            'user_speech_log': user_message
+            }
+
+        
+        return user
+    
+    
+    new_user = to_get_user(is_friend, user_message)
+    
+    # send to rag -> 코드 내에서 생성되는 값을 가져옴
+    # 챗룸아이디 : ChatRoom_id
+    # user id  : User.id
+    # ai id : AI.id
+    # bot id : Chatbot.id
+    # messages: {role, message}
+
+    
+    # 추출한 값이 None이면 예외 발생
+    if not all([chatroom_id, ai_id, user_id]):
+        raise ValueError("chatroom_id, ai_id, or user_id is missing in the request data.")
+    
+    
+    # 만약 'message' 값이 없으면 예외를 발생시킵니다.
+    if not message:
+        raise ValueError("Message (utterance) key is missing in the request data.")
+    
+    #send_to_rag 를 위한 카카오msg
+    # user_msg = gpt_message(role = 'user' , content = message)
+    #user_msg: gpt_message = { "role":"user", "content":message }
+    #send_to_rag.append(user_msg)
+    
+    
+    # 대화 내역에 사용자의 메시지를 추가합니다.
+    add_history(talk_history,"user",message)
+    
+
+
+    kakao_callback = {
+                    "version" : "2.0",
+                    "useCallback" : 'true',
+                    "data": {
+                        "text" : "생각하고 있는 중이에요😘 \n15초 정도 소요될 거 같아요 기다려 주실래요?!"
+                    }
+}
+        
+    # write_notification(callback_url=callback_url, content="",  client=client, message=message, new_user=new_user, chatbot_name=chatbot_name, user_id=user_id, db=db)
     # OpenAI API에 요청을 보냅니다.
     # gpt_message = get_gpt_response(client, message)
-    gpt_all = get_gpt_response(client, message)
+    gpt_all = get_gpt_response(openai_client, message)
     print("gpt_all : ",gpt_all)
     
     # gpt_response = gpt_all.choices[0].message.content
@@ -113,81 +220,9 @@ async def write_notification(callback_url: str, content="", client="", message="
                 # ruser_update(user, update_AI ,db, room)
                 # print("history : ", room.get_chat_history())
     async with httpx.AsyncClient() as client:
-        response = await client.post(callback_url, data=content)
+        response = await client.post(callback_url, data=kakao_response)
         print(response.status_code)
         print(response.text)
-        
-
-@app.post("/chat")
-async def chat(chat_request: Request, db: Session = Depends(db_session), background_tasks: BackgroundTasks = BackgroundTasks ):
-    
-    # 요청으로부터 JSON 데이터를 비동기적으로 가져옵니다.
-        user_response = await chat_request.json()
-        message = user_response.get('userRequest', {}).get('utterance')
-        callback_url =  user_response.get('userRequest', {}).get('callbackUrl')
-        # 카카오톡 응답에서 필요한 값 추출
-        chatroom_id = user_response.get('userRequest', {}).get('block', {}).get('id')
-        chatroom_id2 = user_response.get('userRequest', {}).get('block', {}).get('id')
-
-        ai_id = user_response.get('bot', {}).get('id')
-
-        user_id = user_response.get('userRequest', {}).get('user', {}).get('id')
-
-        is_friend = user_response.get('userRequest', {}).get('user', {}).get('properties', {}).get('isFriend')
-        user_message = user_response.get('userRequest', {}).get('utterance', {})
-        
-        chatbot_name = user_response.get('bot', {}).get('id')
-        
-        def to_get_user(is_friend,user_message):
-            user =  {
-                'friend_status': is_friend,
-                'user_speech_log': user_message
-                }
-
-            
-            return user
-        
-        
-        new_user = to_get_user(is_friend, user_message)
-        
-        # send to rag -> 코드 내에서 생성되는 값을 가져옴
-        # 챗룸아이디 : ChatRoom_id
-        # user id  : User.id
-        # ai id : AI.id
-        # bot id : Chatbot.id
-        # messages: {role, message}
-
-        
-        # 추출한 값이 None이면 예외 발생
-        if not all([chatroom_id, ai_id, user_id]):
-            raise ValueError("chatroom_id, ai_id, or user_id is missing in the request data.")
-        
-        
-        # 만약 'message' 값이 없으면 예외를 발생시킵니다.
-        if not message:
-            raise ValueError("Message (utterance) key is missing in the request data.")
-        
-        #send_to_rag 를 위한 카카오msg
-        # user_msg = gpt_message(role = 'user' , content = message)
-        #user_msg: gpt_message = { "role":"user", "content":message }
-        #send_to_rag.append(user_msg)
-        
-        
-        # 대화 내역에 사용자의 메시지를 추가합니다.
-        add_history(talk_history,"user",message)
-        
-
-    
-        kakao_callback = {
-                        "version" : "2.0",
-                        "useCallback" : 'true',
-                        "data": {
-                            "text" : "생각하고 있는 중이에요😘 \n15초 정도 소요될 거 같아요 기다려 주실래요?!"
-                        }
-    }
-            
-        background_tasks.add_task(write_notification, callback_url=callback_url, content="",  client=client, message=message, new_user=new_user, chatbot_name=chatbot_name, user_id=user_id, db=db)
-        
         
         return JSONResponse(content=kakao_callback)
     
